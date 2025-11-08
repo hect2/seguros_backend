@@ -13,7 +13,14 @@ return Application::configure(basePath: dirname(__DIR__))
         api: __DIR__.'/../routes/api.php',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Middleware global (respuestas JSON forzadas)
         $middleware->append(\App\Http\Middleware\ForceJsonResponse::class);
+        
+        // Middleware CORS
+        $middleware->append(\Illuminate\Http\Middleware\HandleCors::class);
+
+        // Middleware Sanctum (si usás autenticación)
+        $middleware->statefulApi(EnsureFrontendRequestsAreStateful::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
