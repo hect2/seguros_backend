@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\OfficeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -50,5 +51,44 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/download', [DistrictController::class, 'export'])
                 ->name('download')
                 ->middleware('permission:districts_download');
+        });
+
+    Route::prefix('offices')
+        ->name('offices.')
+        ->middleware('permission:offices_view')
+        ->group(function () {
+
+            // GET /api/offices → index()
+            Route::get('/', [OfficeController::class, 'index'])
+                ->name('index');
+
+            // GET /api/offices/{id} → show()
+            Route::get('/{id}', [OfficeController::class, 'show'])
+                ->name('show');
+
+            // POST /api/offices → store()
+            Route::post('/', [OfficeController::class, 'store'])
+                ->name('store')
+                ->middleware('permission:offices_create_or_import');
+
+            // PUT /api/offices/{id} → update()
+            Route::put('/{id}', [OfficeController::class, 'update'])
+                ->name('update')
+                ->middleware('permission:offices_edit');
+
+            // DELETE /api/offices/{id} → destroy()
+            Route::delete('/{id}', [OfficeController::class, 'destroy'])
+                ->name('destroy')
+                ->middleware('permission:offices_delete');
+
+            // POST /api/offices/import → import()
+            Route::post('/import', [OfficeController::class, 'import'])
+                ->name('import')
+                ->middleware('permission:offices_create_or_import');
+
+            // GET /api/offices/download → export()
+            Route::post('/download', [OfficeController::class, 'export'])
+                ->name('download')
+                ->middleware('permission:offices_download');
         });
 });
