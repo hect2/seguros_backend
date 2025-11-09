@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -90,5 +91,37 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::post('/download', [OfficeController::class, 'export'])
                 ->name('download')
                 ->middleware('permission:offices_download');
+        });
+
+    Route::prefix('users')
+        ->name('users.')
+        ->middleware('permission:users_view')
+        ->group(function () {
+
+            // GET /api/users → index()
+            Route::get('/', [UserController::class, 'index'])
+                ->name('index');
+            
+            // GET /api/users/{id} → show()
+            Route::get('/{id}', [UserController::class, 'show'])
+                ->name('show');
+
+            // POST /api/users → store()
+            Route::post('/', [UserController::class, 'store'])
+                ->name('store')
+                ->middleware('permission:users_create');
+
+            // PUT /api/users/{id} → update()
+            Route::put('/{id}', [UserController::class, 'update'])
+                ->name('update')
+                ->middleware('permission:users_edit');
+
+            // GET /api/users/roles → getRoles()
+            Route::post('/roles', [UserController::class, 'getRoles'])
+                ->name('getRoles');
+            
+            // GET /api/users/districts → getDistricts()
+            Route::post('/roles', [UserController::class, 'getDistricts'])
+                ->name('getDistricts');
         });
 });

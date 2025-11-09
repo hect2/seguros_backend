@@ -43,6 +43,11 @@ class PermissionSeeder extends Seeder
             'offices_download',
             'offices_edit',
             'offices_delete',
+
+            // Users
+            'users_view',
+            'users_create',
+            'users_edit',
         ];
 
         foreach ($permissions as $permission) {

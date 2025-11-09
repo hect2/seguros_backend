@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\District;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -20,6 +21,11 @@ class UserSeeder extends Seeder
                 [
                     'name' => $roleName,
                     'password' => Hash::make('password'), // 👈 puedes cambiarlo
+                    'status' =>  fake()->randomElement([1, 0]),
+                    'dpi' => fake()->numerify('#############'),
+                    'phone' => fake()->phoneNumber(),
+                    'district' => json_encode([]),
+                    'observations' => fake()->sentence(),
                 ]
             );
 

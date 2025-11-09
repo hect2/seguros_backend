@@ -45,6 +45,10 @@ class RolePermissionSeeder extends Seeder
             'offices_create_or_import',
             'offices_download',
             'offices_edit',
+
+            'users_view',
+            'users_create',
+            'users_edit',
         ]);
 
         // 👨‍💼 Supervisor: solo revisión y visualización
@@ -56,6 +60,7 @@ class RolePermissionSeeder extends Seeder
             'reports_view',
             'districts_view',
             'offices_view',
+            'users_view',
         ]);
 
         // ⚙️ Operador: tareas básicas (solo ver/crear)
