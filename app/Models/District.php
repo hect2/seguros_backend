@@ -19,4 +19,14 @@ class District extends Model
         'description',
         'status',
     ];
+
+    public function offices()
+    {
+        return $this->hasMany(Office::class);
+    }
+
+    public function getOfficesCountAttribute(): int
+    {
+        return $this->offices()->count();
+    }
 }

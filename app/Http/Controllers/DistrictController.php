@@ -10,6 +10,16 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class DistrictController extends Controller
 {
+    public $notFoundMessage = 'Distrito no encontrado.';
+    public $storeErrorMessage = 'Fallo al crear el distrito.';
+    public $storeSuccessMessage = 'Distrito creado correctamente.';
+    public $updateSuccessMessage = 'Distrito actualizado correctamente.';
+    public $deleteSuccessMessage = 'Distrito eliminado correctamente.';
+    public $importSuccessMessage = 'Distritos importados correctamente.';
+    public $importErrorMessage = 'Error al importar el archivo.';
+    public $formatNotSupported = 'Formato no soportado';
+    public $formatsSupported = ['xlsx', 'csv'];
+
     /**
      * Display a listing of the resource.
      */
@@ -23,12 +33,16 @@ class DistrictController extends Controller
                 ->orWhere('code', 'like', "%{$search}%");
         }
 
+        if ($status = $request->query('status')) {
+            $query->where('status', $status);
+        }
+
         // Paginación y orden
         $perPage = $request->query('per_page', 10);
         $sortBy = $request->query('sort_by', 'id');
         $sortDir = $request->query('', 'asc');
 
-        $districts = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
+        $districts = $query->withCount('offices')->orderBy($sortBy, $sortDir)->paginate($perPage);
 
         return response()->json($districts, 200);
     }
@@ -51,7 +65,7 @@ class DistrictController extends Controller
             return response()->json([
                 'error' => true,
                 'code' => 500,
-                'message' => 'Fallo al crear el distrito.',
+                'message' => $this->storeErrorMessage,
             ], 500);
         }
     
@@ -59,7 +73,7 @@ class DistrictController extends Controller
             'error' => false,
             'code' => 201,
             'data' => $district,
-            'message' => 'Distrito creado correctamente.',
+            'message' => $this->storeSuccessMessage,
         ], 201);
     }
 
@@ -74,7 +88,7 @@ class DistrictController extends Controller
             return response()->json([
                 'error' => true,
                 'code' => 404,
-                'message' => 'Distrito no encontrado.',
+                'message' => $this->notFoundMessage,
             ], 404);
         }
 
@@ -96,7 +110,7 @@ class DistrictController extends Controller
             return response()->json([
                 'error' => true,
                 'code' => 404,
-                'message' => 'Distrito no encontrado.',
+                'message' => $this->notFoundMessage,
             ], 404);
         }
     
@@ -114,7 +128,7 @@ class DistrictController extends Controller
             'error' => false,
             'code' => 200,
             'data' => $district,
-            'message' => 'Distrito actualizado correctamente.',
+            'message' => $this->updateSuccessMessage,
         ], 200);
     }
 
@@ -129,7 +143,7 @@ class DistrictController extends Controller
             return response()->json([
                 'error' => true,
                 'code' => 404,
-                'message' => 'Distrito no encontrado.',
+                'message' => $this->notFoundMessage,
             ], 404);
         }
 
@@ -139,7 +153,7 @@ class DistrictController extends Controller
             'error' => false,
             'code' => 200,
             'data' => $district,
-            'message' => 'Distrito eliminado correctamente.',
+            'message' => $this->deleteSuccessMessage,
         ], 200);
     }
 
@@ -155,14 +169,14 @@ class DistrictController extends Controller
             return response()->json([
                 'error' => false,
                 'code' => 200,
-                'message' => 'Distritos importados correctamente.',
+                'message' => $this->importSuccessMessage,
             ], 200);
 
         } catch (\Exception $e) {
             return response()->json([
                 'error' => false,
                 'code' => 422,
-                'message' => 'Error al importar el archivo.',
+                'message' => $this->importErrorMessage,
                 'error' => $e->getMessage(),
             ], 422);
         }
@@ -175,8 +189,8 @@ class DistrictController extends Controller
         $format = $request->input('format');
 
         // validar formato permitido
-        if (!in_array($format, ['xlsx', 'csv'])) {
-            return response()->json(['error' => 'Formato no soportado'], 400);
+        if (!in_array($format, $this->formatsSupported)) {
+            return response()->json(['error' => $this->formatNotSupported], 400);
         }
 
         $fileName = 'districts_' . now()->format('Y_m_d_His') . $format;
