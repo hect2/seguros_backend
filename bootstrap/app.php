@@ -21,6 +21,12 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // Middleware Sanctum (si usás autenticación)
         $middleware->statefulApi(EnsureFrontendRequestsAreStateful::class);
+
+        // Alias de middleware
+        $middleware->alias([
+            'check.token.expiration' => \App\Http\Middleware\CheckTokenExpiration::class,
+        ]);
+
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
