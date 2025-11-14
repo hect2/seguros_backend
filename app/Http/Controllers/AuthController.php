@@ -38,8 +38,10 @@ class AuthController extends Controller
             'role_names' => $user->role_names,
             'permission_names' => $user->permission_names
         ];
+        $token = $user->createToken('api_token', ['*'], now()->addHours(2))->plainTextToken;
         return response()->json([
             'user' => $data_user,
+            'token' => $token,
         ]);
     }
 
