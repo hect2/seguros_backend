@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 class Critical extends Model
 {
     use HasFactory;
+    protected $table = 'criticals';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'name',

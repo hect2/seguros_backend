@@ -11,6 +11,9 @@ class MessageIncident extends Model
     use HasFactory;
 
     protected $table = 'message_incidents';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'id_message_reply',

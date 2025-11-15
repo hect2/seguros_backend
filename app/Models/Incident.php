@@ -12,6 +12,8 @@ class Incident extends Model
 
     protected $table = 'incidents';
     protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'title',

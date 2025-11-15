@@ -9,6 +9,7 @@ class Office extends Model
 {
     use HasFactory;
 
+    protected $table = 'offices';
     protected $primaryKey = 'id';
     public $incrementing = true;
     protected $keyType = 'int';

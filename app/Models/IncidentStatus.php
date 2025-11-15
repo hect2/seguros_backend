@@ -11,6 +11,8 @@ class IncidentStatus extends Model
 
     protected $table = 'incident_statuses';
     protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
 
     protected $fillable = [
         'name',

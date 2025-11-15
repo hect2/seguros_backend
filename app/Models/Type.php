@@ -9,6 +9,10 @@ class Type extends Model
 {
     use HasFactory;
 
+    protected $table = 'types';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
     protected $fillable = [
         'name',
         'description',
