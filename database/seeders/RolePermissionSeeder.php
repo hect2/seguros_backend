@@ -24,9 +24,9 @@ class RolePermissionSeeder extends Seeder
             'dashboard_view_reports',
             'dashboard_view_charts',
 
-            'news_view',
-            'news_create',
-            'news_edit',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
 
             'employees_view',
             'employees_create',
@@ -54,7 +54,7 @@ class RolePermissionSeeder extends Seeder
         // 👨‍💼 Supervisor: solo revisión y visualización
         $supervisor->syncPermissions([
             'dashboard_view_reports',
-            'news_view',
+            'incidents_view',
             'employees_view',
             'employees_approve',
             'reports_view',
@@ -65,8 +65,8 @@ class RolePermissionSeeder extends Seeder
 
         // ⚙️ Operador: tareas básicas (solo ver/crear)
         $operator->syncPermissions([
-            'news_view',
-            'news_create',
+            'incidents_view',
+            'incidents_create',
             'employees_view',
             'reports_view',
             'districts_view',

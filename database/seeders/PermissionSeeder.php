@@ -14,11 +14,10 @@ class PermissionSeeder extends Seeder
             'dashboard_view_reports',
             'dashboard_view_charts',
 
-            // News
-            'news_view',
-            'news_create',
-            'news_delete',
-            'news_edit',
+            // Incidents
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
 
             // Employees
             'employees_view',

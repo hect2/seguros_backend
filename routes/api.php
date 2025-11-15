@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\IncidentController;
+use App\Http\Controllers\MessageIncidentController;
 use App\Http\Controllers\OfficeController;
+use App\Http\Controllers\ReportIncidentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -14,6 +17,31 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
     Route::get('/user', [AuthController::class, 'user']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
+    Route::prefix('list')
+        ->name('list.')
+        ->middleware('permission:districts_view')
+        ->group(function () {
+
+            // GET /api/list/roles → getRoles()
+            Route::get('/roles', [UserController::class, 'getRoles'])
+                ->name('getRoles');
+
+            // GET /api/list/districts → getDistricts()
+            Route::get('/districts', [UserController::class, 'getDistricts'])
+                ->name('getDistricts');
+
+            // GET /api/list/offices → getOffices()
+            Route::get('/offices', [IncidentController::class, 'getOffices'])
+                ->name('getOffices');
+
+            // GET /api/list/types → getTypes()
+            Route::get('/types', [IncidentController::class, 'getTypes'])
+                ->name('getTypes');
+
+            // GET /api/list/criticals → getCriticals()
+            Route::get('/criticals', [IncidentController::class, 'getCriticals'])
+                ->name('getCriticals');
+        });
 
     Route::prefix('districts')
         ->name('districts.')
@@ -101,7 +129,7 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/users → index()
             Route::get('/', [UserController::class, 'index'])
                 ->name('index');
-            
+
             // GET /api/users/{id} → show()
             Route::get('/{id}', [UserController::class, 'show'])
                 ->name('show');
@@ -115,13 +143,54 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::put('/{id}', [UserController::class, 'update'])
                 ->name('update')
                 ->middleware('permission:users_edit');
-
-            // GET /api/users/roles → getRoles()
-            Route::post('/roles', [UserController::class, 'getRoles'])
-                ->name('getRoles');
-            
-            // GET /api/users/districts → getDistricts()
-            Route::post('/roles', [UserController::class, 'getDistricts'])
-                ->name('getDistricts');
         });
+
+    Route::prefix('incidents')
+        ->name('incidents.')
+        ->middleware('permission:incidents_view')
+        ->group(function () {
+
+            // GET /api/incidents → index()
+            Route::get('/', [IncidentController::class, 'index'])
+                ->name('index');
+
+            // GET /api/incidents/{id} → show()
+            Route::get('/show/{id}', [IncidentController::class, 'show'])
+                ->name('show');
+
+            // POST /api/incidents → store()
+            Route::post('/', [IncidentController::class, 'store'])
+                ->name('store')
+                ->middleware('permission:incidents_create');
+
+            // PUT /api/incidents/{id} → update()
+            Route::put('/update/{id}', [IncidentController::class, 'update'])
+                ->name('update')
+                ->middleware('permission:incidents_edit');
+
+            // GET /api/incidents/reports → index()
+            Route::get('/reports', [ReportIncidentController::class, 'index'])
+                ->name('reports');
+
+
+            Route::prefix('messages')
+                ->name('messages.')
+                ->group(function () {
+
+                    // GET /api/incidents/messages/list/{$id} → index()
+                    Route::get('/list/{incident_id}', [MessageIncidentController::class, 'index']);
+
+                    // POST /api/incidents/messages/ → store()
+                    Route::post('/', [MessageIncidentController::class, 'store']);
+
+                    // PUT /api/incidents/messages/{$id} → update()
+                    Route::put('/{id}', [MessageIncidentController::class, 'update']);
+
+                    // DELETE /api/incidents/messages/{$id} → destroy()
+                    Route::delete('/{id}', [MessageIncidentController::class, 'destroy']);
+                });
+        });
+
+
+
 });

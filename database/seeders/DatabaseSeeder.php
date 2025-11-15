@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use Illuminate\Database\Console\Migrations\StatusCommand;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Database\Seeders\PermissionSeeder;
@@ -26,6 +27,10 @@ class DatabaseSeeder extends Seeder
             DistrictSeeder::class,
             UserSeeder::class,
             OfficeSeeder::class,
+            TypeSeeder::class,
+            CriticalSeeder::class,
+            IncidentStatusSeeder::class,
+            IncidentSeeder::class,
         ]);
     }
 }
