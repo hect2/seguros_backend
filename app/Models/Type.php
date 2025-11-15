@@ -15,6 +15,7 @@ class Type extends Model
     protected $keyType = 'int';
     protected $fillable = [
         'name',
+        'slug',
         'description',
     ];
 

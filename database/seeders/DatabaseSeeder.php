@@ -22,14 +22,19 @@ class DatabaseSeeder extends Seeder
 
 
         $this->call([
-            PermissionSeeder::class,
-            RolePermissionSeeder::class,
-            DistrictSeeder::class,
-            UserSeeder::class,
-            OfficeSeeder::class,
+            // Catalog
             TypeSeeder::class,
             CriticalSeeder::class,
             IncidentStatusSeeder::class,
+
+            // Roles
+            PermissionSeeder::class,
+            RolePermissionSeeder::class,
+
+            // Tests
+            DistrictSeeder::class,
+            OfficeSeeder::class,
+            UserSeeder::class,
             IncidentSeeder::class,
         ]);
     }

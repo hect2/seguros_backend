@@ -31,6 +31,14 @@ class CriticalSeeder extends Seeder
             ],
         ];
 
-        Critical::insert($criticals);
+        foreach ($criticals as $key => $value) {
+            Critical::updateOrCreate(
+                ['slug'=> $value['slug']],
+                [
+                    'name'=> $value['name'],
+                    'description'=> $value['description'],
+                ]
+            );
+        }
     }
 }
