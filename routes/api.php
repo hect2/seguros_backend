@@ -2,10 +2,16 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DistrictController;
+use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MessageIncidentController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ReportIncidentController;
+use App\Http\Controllers\Reports\ClientTotalsController;
+use App\Http\Controllers\Reports\DigesspReportController;
+use App\Http\Controllers\Reports\GeneralReportController;
+use App\Http\Controllers\Reports\OfficeSummaryController;
+use App\Http\Controllers\Reports\PNCReportController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -191,6 +197,54 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
                 });
         });
 
+    Route::prefix('employees')
+        ->name('employees.')
+        ->middleware('permission:employees_view')
+        ->group(function () {
 
+            // GET /api/employees → index()
+            Route::get('/', [EmployeeController::class, 'index'])
+                ->name('index');
+
+            // GET /api/employees/show/{id} → show()
+            Route::get('/show/{id}', [EmployeeController::class, 'show'])
+                ->name('show');
+
+            // POST /api/employees → store()
+            Route::post('/', [EmployeeController::class, 'store'])
+                ->name('store')
+                ->middleware('permission:employees_create_or_import');
+
+            // PUT /api/employees/update/{id} → update()
+            Route::put('/update/{id}', [EmployeeController::class, 'update'])
+                ->name('update')
+                ->middleware('permission:employees_edit');
+
+            // POST /api/employees/import → import()
+            Route::post('/import', [EmployeeController::class, 'import'])
+                ->name('import')
+                ->middleware('permission:employees_create_or_import');
+        });
+
+
+    Route::prefix('reports')->group(function () {
+        Route::get('/pnc', [PNCReportController::class, 'index']);
+        Route::get('/general', [GeneralReportController::class, 'index']);
+        Route::get('/office-summary', [OfficeSummaryController::class, 'index']);
+        Route::get('/digessp', [DigesspReportController::class, 'index']);
+        Route::get('/client-totals', [ClientTotalsController::class, 'index']);
+
+        // Downloads
+        Route::get('/pnc/pdf', [PNCReportController::class, 'pdf']);
+        Route::get('/pnc/xlsx', [PNCReportController::class, 'xlsx']);
+
+        Route::get('/general/pdf', [GeneralReportController::class, 'pdf']);
+        Route::get('/general/csv', [GeneralReportController::class, 'csv']);
+        Route::get('/general/xlsx', [GeneralReportController::class, 'xlsx']);
+
+        Route::get('/office-summary/xlsx', [OfficeSummaryController::class, 'xlsx']);
+        Route::get('/digessp/xlsx', [DigesspReportController::class, 'xlsx']);
+        Route::get('/client-totals/xlsx', [ClientTotalsController::class, 'xlsx']);
+    });
 
 });

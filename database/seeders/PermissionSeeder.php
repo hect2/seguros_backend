@@ -21,7 +21,7 @@ class PermissionSeeder extends Seeder
 
             // Employees
             'employees_view',
-            'employees_create',
+            'employees_create_or_import',
             'employees_edit',
             'employees_approve',
 
@@ -50,7 +50,8 @@ class PermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web',]);
+
         }
     }
 }

@@ -59,17 +59,24 @@ class Base64FileService
     }
 
 
-    public function process_files(array $files, string $directory, int $id): array{
+    public function process_files(array $files, string $directory, int $id, $module = ''): array{
         $files_saved = [];
         Log::error(message: 'Save file');
         foreach ($files as $file) {
             $path= $directory . '/' . $id ;
             Log::error('Inicio de save file: '. $id .' - '. $path);
-            $files_saved[] = $this->save(
+            $file_saved = $this->save(
                 base64: $file['file'],
                 path: $path,
                 filename: $file['name']
             );
+
+            if ($module == 'employee') {
+                $file_saved['date_emission'] = $file['date_emission'];
+                $file_saved['type'] = $file['type'];
+            }
+
+            $files_saved[] = $file_saved;
         }
 
         return $files_saved;

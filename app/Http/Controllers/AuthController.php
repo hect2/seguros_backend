@@ -19,6 +19,7 @@ class AuthController extends Controller
         $token = $user->createToken('api_token', ['*'], now()->addHours(2))->plainTextToken;
 
         $data_user = [
+            'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role_names' => $user->role_names,
@@ -33,12 +34,13 @@ class AuthController extends Controller
     public function user(Request $request) {
         $user = Auth::user();
         $data_user = [
+            'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'role_names' => $user->role_names,
             'permission_names' => $user->permission_names
         ];
-        $token = $user->createToken('api_token', ['*'], now()->addHours(2))->plainTextToken;
+        $token = '';
         return response()->json([
             'user' => $data_user,
             'token' => $token,

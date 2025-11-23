@@ -50,7 +50,7 @@ class IncidentSeeder extends Seeder
                 'office_id' => Office::inRandomOrder()->first()->id,
                 'criticity_id' => Critical::inRandomOrder()->first()->id,
                 'description' => fake()->paragraph(),
-                'files' => json_encode($files),
+                'files' => $files,
                 'status_id' => IncidentStatus::inRandomOrder()->first()->id,
                 'user_reported' => User::inRandomOrder()->first()->id,
                 'user_assigned' => $user_assigned,

@@ -58,6 +58,7 @@ class IncidentReportService
 
         $incidents_criticals = $by_critical->map(fn($incident) => [
             'critical' => $incident->criticidad?->name,
+            'slug' => $incident->criticidad?->slug,
             'total' => $incident->total,
         ])->toArray();
 

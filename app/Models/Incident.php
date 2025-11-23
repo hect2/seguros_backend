@@ -48,7 +48,7 @@ class Incident extends Model
     // 🔹 Relaciones
     public function oficina()
     {
-        return $this->belongsTo(Office::class, 'OficinaID', 'OficinaID');
+        return $this->belongsTo(Office::class, 'office_id', 'id');
     }
 
     public function userReported()

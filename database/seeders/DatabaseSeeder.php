@@ -26,16 +26,21 @@ class DatabaseSeeder extends Seeder
             TypeSeeder::class,
             CriticalSeeder::class,
             IncidentStatusSeeder::class,
+            PositionTypeSeeder::class,
+            EmployeeStatusSeeder::class,
 
             // Roles
             PermissionSeeder::class,
             RolePermissionSeeder::class,
 
             // Tests
+            UserSeeder::class,
             DistrictSeeder::class,
             OfficeSeeder::class,
-            UserSeeder::class,
             IncidentSeeder::class,
+            EmployeeSeeder::class,
+            PositionSeeder::class,
+            TrackingSeeder::class,
         ]);
     }
 }

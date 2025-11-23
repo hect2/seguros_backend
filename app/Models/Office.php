@@ -34,4 +34,9 @@ class Office extends Model
     {
         return $this->belongsTo(User::class)->withDefault();
     }
+
+    public function employees()
+    {
+        return $this->hasMany(Position::class,'office_id','id');
+    }
 }

@@ -25,15 +25,19 @@ class IncidentController extends Controller
     {
         $query = Incident::query()
             ->join('offices', 'offices.id', '=', 'incidents.office_id')
-            ->leftJoin('users', 'users.id', '=', 'incidents.user_assigned');
+            ->leftJoin('users', 'users.id', '=', 'incidents.user_assigned')
+            ->leftJoin('types', 'types.id', '=', 'incidents.type_id')
+            ->leftJoin('criticals', 'criticals.id', '=', 'incidents.criticity_id')
+            ->leftJoin('incident_statuses', 'incident_statuses.id', '=', 'incidents.status_id')
+            ;
 
         // Filtros opcionales
         if ($search = $request->query('search')) {
             $query->where('users.name', 'like', "%{$search}%");
         }
 
-        if ($type = $request->query('type')) {
-            $query->where('incidents.type', $type);
+        if ($type = $request->query('type_id')) {
+            $query->where('incidents.type_id', $type);
         }
 
         if ($office_id = $request->query('office_id')) {
@@ -41,7 +45,7 @@ class IncidentController extends Controller
         }
 
         if ($criticidad = $request->query('criticidad')) {
-            $query->whereIn('incidents.criticidad', $criticidad);
+            $query->whereIn('criticals.slug', $criticidad);
         }
 
         if ($startDate = $request->query('fecha_inicio')) {
@@ -58,7 +62,9 @@ class IncidentController extends Controller
         $sortBy = $request->query('sort_by', 'incidents.id');
         $sortDir = $request->query('', 'asc');
 
-        $incidents = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
+        $incidents = $query->orderBy($sortBy, $sortDir)
+            ->select('incidents.id', 'incidents.created_at as date', 'types.name as type', 'incidents.description as description', 'offices.code as office', 'users.name as user_reported', 'criticals.name as criticity', 'criticals.slug as criticity_slug', 'incident_statuses.name as status', 'incident_statuses.slug as status_slug')
+            ->paginate($perPage);
 
         return response()->json($incidents, 200);
     }
@@ -116,7 +122,7 @@ class IncidentController extends Controller
         return response()->json([
             'error' => false,
             'code' => 201,
-            'data' => $incident,
+            'incident' => $incident->id,
             'message' => $this->storeSuccessMessage,
         ], 201);
     }
@@ -127,6 +133,22 @@ class IncidentController extends Controller
     public function show($id)
     {
         $incident = Incident::find($id);
+
+        $data = [
+            'id' => $incident->id,
+            'title' => $incident->title,
+            'type' => $incident->type?->name,
+            'office' => $incident->oficina?->code,
+            'criticity' => $incident->criticidad?->name,
+            'criticity_slug' => $incident->criticidad?->slug,
+            'description' => $incident->description,
+            'files' => $incident->files,
+            'status' => $incident->status?->name,
+            'status_slug' => $incident->status?->slug,
+            'user_reported' => $incident->userReported?->name,
+            'user_assigned' => $incident->userAssigned?->name,
+            'created_at' => $incident->created_at,
+        ];
 
         if (!$incident) {
             return response()->json([
@@ -139,7 +161,7 @@ class IncidentController extends Controller
         return response()->json([
             'error' => false,
             'code' => 200,
-            'data' => $incident,
+            'data' => $data,
         ], 200);
     }
 
@@ -223,7 +245,7 @@ class IncidentController extends Controller
     }
 
     public function getCriticals(){
-        $criticals = Critical::select('id', 'name')->get();
+        $criticals = Critical::select('id', 'name', 'slug')->get();
         return response()->json([
             'error' => false,
             'code' => 200,
