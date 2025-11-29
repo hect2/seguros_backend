@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IncidentController;
@@ -25,7 +26,6 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
 
     Route::prefix('list')
         ->name('list.')
-        ->middleware('permission:districts_view')
         ->group(function () {
 
             // GET /api/list/roles → getRoles()
@@ -52,6 +52,25 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::get('/status-employees', [EmployeeController::class, 'getStatusEmployees'])
                 ->name('getStatusEmployees');
         });
+
+    Route::prefix('counts')
+        ->name('counts.')
+        ->group(function () {
+
+            // GET /api/counts/districts/ → getCount()
+            Route::get('/districts', [DistrictController::class, 'getCount'])
+                ->name('districts.getCount');
+
+            // GET /api/counts/offices/ → getCount()
+            Route::get('/offices', [OfficeController::class, 'getCount'])
+                ->name('offices.all');
+
+            // GET /api/counts/business/ → getCount()
+            Route::get('/business', [BusinessController::class, 'getCount'])
+                ->name('business.all');
+        });
+
+
 
     Route::prefix('districts')
         ->name('districts.')

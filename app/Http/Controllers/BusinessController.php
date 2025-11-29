@@ -113,4 +113,13 @@ class BusinessController extends Controller
             'message' => $this->deleteSuccessMessage,
         ], 200);
     }
+
+    public function getCount()
+    {
+        $total = Business::count();
+
+        return response()->json([
+            'total' => $total,
+        ], 200);
+    }
 }

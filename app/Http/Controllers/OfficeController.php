@@ -210,6 +210,15 @@ class OfficeController extends Controller
             return Excel::download(new OfficesExport($status, $search), $fileName, \Maatwebsite\Excel\Excel::CSV);
         }
         return Excel::download(new OfficesExport($status, $search), $fileName);
-        
+
+    }
+
+    public function getCount()
+    {
+        $total = Office::where('status', 1)->count();
+
+        return response()->json([
+            'total' => $total,
+        ], 200);
     }
 }

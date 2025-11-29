@@ -68,7 +68,7 @@ class DistrictController extends Controller
                 'message' => $this->storeErrorMessage,
             ], 500);
         }
-    
+
         return response()->json([
             'error' => false,
             'code' => 201,
@@ -83,7 +83,7 @@ class DistrictController extends Controller
     public function show($id)
     {
         $district = District::find($id);
-        
+
         if (!$district) {
             return response()->json([
                 'error' => true,
@@ -105,7 +105,7 @@ class DistrictController extends Controller
     public function update(Request $request, $id)
     {
         $district = District::find($id);
-    
+
         if (!$district) {
             return response()->json([
                 'error' => true,
@@ -113,7 +113,7 @@ class DistrictController extends Controller
                 'message' => $this->notFoundMessage,
             ], 404);
         }
-    
+
         // Validación de los campos permitidos
         $validated = $request->validate([
             'code' => 'sometimes|string|unique:districts,code,' . $district->id,
@@ -121,9 +121,9 @@ class DistrictController extends Controller
             'description' => 'nullable|string',
             'status' => 'sometimes|integer|in:0,1',
         ]);
-    
+
         $district->update($validated);
-    
+
         return response()->json([
             'error' => false,
             'code' => 200,
@@ -138,7 +138,7 @@ class DistrictController extends Controller
     public function destroy($id)
     {
         $district = District::find($id);
-    
+
         if (!$district) {
             return response()->json([
                 'error' => true,
@@ -198,6 +198,14 @@ class DistrictController extends Controller
             return Excel::download(new DistrictsExport($status, $search), $fileName, \Maatwebsite\Excel\Excel::CSV);
         }
         return Excel::download(new DistrictsExport($status, $search), $fileName);
-        
+    }
+
+    public function getCount()
+    {
+        $total = District::where('status', 1)->count();
+
+        return response()->json([
+            'total' => $total,
+        ], 200);
     }
 }
