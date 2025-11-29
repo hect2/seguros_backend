@@ -45,15 +45,11 @@ class UserController extends Controller
         }
 
         if ($district_ids = $request->query('district_ids')) {
-            $query->where(function ($q) use ($district_ids) {
-                foreach ($district_ids as $id) {
-                    $q->orWhere(function ($sub) use ($id) {
-                        $sub->whereNotNull('district')
-                            ->whereJsonContains('district->districts', $id);
-                    });
-                }
-            });
+            $district_ids = array_map('intval', $district_ids);
+            $query->whereNotNull('district')
+                    ->whereJsonContains('district', $district_ids);
         }
+
 
         if ($rol_id = $request->query('rol_id')) {
             $query->where('model_has_roles.role_id', $rol_id);
@@ -132,7 +128,7 @@ class UserController extends Controller
         if (!$user || !$user->exists) {
             return response()->json([
                 'error' => true,
-                'code' => 500,
+                'code' => 500,district,
                 'message' => $this->storeErrorMessage,
             ], 500);
         }
