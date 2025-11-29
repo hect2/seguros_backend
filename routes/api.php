@@ -247,4 +247,32 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
         Route::get('/client-totals/xlsx', [ClientTotalsController::class, 'xlsx']);
     });
 
+    Route::prefix('business')
+        ->name('business.')
+        ->middleware('permission:business_view')
+        ->group(function () {
+
+            // GET /api/business → index()
+            Route::get('/', [BusinessController::class, 'index'])
+                ->name('index');
+
+            // GET /api/business/{id} → show()
+            Route::get('/{id}', [BusinessController::class, 'show'])
+                ->name('show');
+
+            // POST /api/business → store()
+            Route::post('/', [BusinessController::class, 'store'])
+                ->name('store')
+                ->middleware('permission:business_create');
+
+            // PUT /api/business/{id} → update()
+            Route::put('/{id}', [BusinessController::class, 'update'])
+                ->name('update')
+                ->middleware('permission:business_edit');
+
+            // DELETE /api/business/{id} → destroy()
+            Route::delete('/{id}', [BusinessController::class, 'destroy'])
+                ->name('destroy')
+                ->middleware('permission:business_delete');
+        });
 });
