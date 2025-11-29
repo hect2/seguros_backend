@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\District;
+use App\Models\EmployeeStatus;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,11 +22,13 @@ class UserSeeder extends Seeder
                 [
                     'name' => $roleName,
                     'password' => Hash::make('password'), // 👈 puedes cambiarlo
-                    'status' =>  fake()->randomElement([1, 0]),
+                    'status' =>  EmployeeStatus::inRandomOrder()->first()->id,
                     'dpi' => fake()->numerify('#############'),
                     'phone' => fake()->phoneNumber(),
                     'district' => json_encode([]),
+                    'office' => json_encode([]),
                     'observations' => fake()->sentence(),
+                    'last_changed_password' => now(),
                 ]
             );
 

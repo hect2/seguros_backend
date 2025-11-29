@@ -30,6 +30,8 @@ class User extends Authenticatable
         'phone',
         'district',
         'observations',
+        'last_login',
+        'last_changed_password',
     ];
 
     /**
@@ -52,6 +54,8 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'district' => 'array',
+            'office' => 'array',
         ];
     }
 

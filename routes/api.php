@@ -47,6 +47,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/list/criticals → getCriticals()
             Route::get('/criticals', [IncidentController::class, 'getCriticals'])
                 ->name('getCriticals');
+
+            // GET /api/list/status-employees → getStatusEmployees()
+            Route::get('/status-employees', [EmployeeController::class, 'getStatusEmployees'])
+                ->name('getStatusEmployees');
         });
 
     Route::prefix('districts')

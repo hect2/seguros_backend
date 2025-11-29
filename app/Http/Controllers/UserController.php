@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\District;
+use App\Models\Office;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -23,14 +24,19 @@ class UserController extends Controller
     {
         $query = User::query()
             ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
-            ->where('model_has_roles.model_type', 'App\Models\User');
+            ->where('model_has_roles.model_type', 'App\Models\User')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->join('employee_statuses', 'users.status', '=', 'employee_statuses.id')
+            ->select('users.id', 'users.name', 'users.email', 'employee_statuses.slug as status_slug', 'employee_statuses.name as status_name', 'users.dpi', 'roles.name as role_name', 'users.district', 'users.office', 'users.last_login') // Agregar esto
+            ->orderBy('users.id', 'asc');
+
 
         // Filtros opcionales
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('users.name', 'like', "%{$search}%")
-                  ->orWhere('users.email', 'like', "%{$search}%")
-                  ->orWhere('users.dpi', 'like', "%{$search}%");
+                    ->orWhere('users.email', 'like', "%{$search}%")
+                    ->orWhere('users.dpi', 'like', "%{$search}%");
             });
         }
 
@@ -49,16 +55,27 @@ class UserController extends Controller
             });
         }
 
-        if ($rol = $request->query('rol')) {
-            $query->where('model_has_roles.role_id', $rol);
+        if ($rol_id = $request->query('rol_id')) {
+            $query->where('model_has_roles.role_id', $rol_id);
         }
 
         // Paginación y orden
         $perPage = $request->query('per_page', 10);
-        $sortBy = $request->query('sort_by', 'id');
-        $sortDir = $request->query('', 'asc');
+        $users = $query->paginate($perPage);
 
-        $users = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
+        $users->getCollection()->transform(function ($user) {
+            $districtData = is_array($user->district) ? $user->district : [];
+            $officeData = is_array($user->office) ? $user->office : [];
+
+            $districtIds = $districtData ?? [];
+            $officeIds = $officeData ?? [];
+
+            // // Trae los códigos reales desde las tablas
+            $user->district = $districtIds ? District::whereIn('id', $districtIds)->pluck('code') : [];
+            $user->office = $officeIds ? Office::whereIn('id', $officeIds)->pluck('code') : [];
+
+            return $user;
+        });
 
         return response()->json($users, 200);
     }
@@ -69,17 +86,33 @@ class UserController extends Controller
     public function store(Request $request)
     {
         // ✅ Validación de datos
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|min:8',
-            'status' => 'nullable|integer|in:0,1',
-            'dpi' => 'required|string|max:20|unique:users,dpi',
-            'phone' => 'nullable|string|max:20',
-            'district' => 'nullable|array', // debe venir como array
-            'observations' => 'nullable|string',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+        $validated = $request->validate(
+            [
+                'name' => 'required|string|max:255',
+                'email' => 'required|email|unique:users,email',
+                'password' => 'required|string|min:8',
+                'status' => 'nullable|integer|exists:employee_statuses,id',
+                'dpi' => 'required|string|max:20|unique:users,dpi',
+                'phone' => 'nullable|string|max:20',
+                'district' => 'nullable|array', // debe venir como array
+                'observations' => 'nullable|string',
+                'role_id' => 'required|exists:roles,id',
+            ],
+            [
+                'name.required' => 'El nombre es obligatorio.',
+                'email.required' => 'El correo electrónico es obligatorio.',
+                'email.email' => 'El correo electrónico no tiene un formato válido.',
+                'email.unique' => 'El correo electrónico ya está registrado.',
+                'password.required' => 'La contraseña es obligatoria.',
+                'password.min' => 'La contraseña debe tener al menos :min caracteres.',
+                'dpi.required' => 'El DPI es obligatorio.',
+                'dpi.unique' => 'El DPI ya está registrado.',
+                'district.array' => 'El distrito debe ser un arreglo válido.',
+                'role_id.required' => 'Debe seleccionar un rol.',
+                'role_id.exists' => 'El rol seleccionado no existe.',
+            ]
+        );
+
 
         // ✅ Crear usuario
         $user = User::create([
@@ -90,9 +123,10 @@ class UserController extends Controller
             'dpi' => $validated['dpi'],
             'phone' => $validated['phone'] ?? null,
             'district' => isset($validated['district'])
-                ? json_encode(['districts' => $validated['district']])
+                ? $validated['district']
                 : null,
             'observations' => $validated['observations'] ?? null,
+            'last_changed_password' => now(),
         ]);
 
         if (!$user || !$user->exists) {
@@ -128,7 +162,47 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = User::find($id);
+        // $user = User::find($id);
+        $query = User::query()
+            ->join('model_has_roles', 'users.id', '=', 'model_has_roles.model_id')
+            ->where('model_has_roles.model_type', 'App\Models\User')
+            ->join('roles', 'model_has_roles.role_id', '=', 'roles.id')
+            ->join('employee_statuses', 'users.status', '=', 'employee_statuses.id')
+            ->select(
+                'users.id',
+                'users.name',
+                'users.email',
+                'employee_statuses.id as status_id',
+                'employee_statuses.slug as status_slug',
+                'employee_statuses.name as status_name',
+                'users.dpi',
+                'roles.name as role_name',
+                'roles.id as role_id',
+                'users.district',
+                'users.office',
+                'users.last_login',
+                'users.observations',
+                'users.phone',
+                'users.last_changed_password',
+                'users.created_at',
+                'users.updated_at',
+            )
+            ->where('users.id', $id);
+
+        $user = $query->get()->map(function ($user) {
+            $districtData = is_array($user->district) ? $user->district : [];
+            $officeData = is_array($user->office) ? $user->office : [];
+
+            $districtIds = $districtData ?? [];
+            $officeIds = $officeData ?? [];
+
+            // // Trae los códigos reales desde las tablas
+            $user->districtIds = $districtIds ?? [];
+            $user->district = $districtIds ? District::whereIn('id', $districtIds)->pluck('code') : [];
+            $user->office = $officeIds ? Office::whereIn('id', $officeIds)->pluck('code') : [];
+
+            return $user;
+        })->first();
 
         if (!$user) {
             return response()->json([
@@ -139,10 +213,24 @@ class UserController extends Controller
         }
 
         $data_user = [
-            'name' => $user->name,
-            'email' => $user->email,
-            'role_names' => $user->role_names,
-            'permission_names' => $user->permission_names
+            "id" => $user->id,
+            "name" => $user->name,
+            "email" => $user->email,
+            "status_slug" => $user->status_slug,
+            "status_name" => $user->status_name,
+            "status_id" => $user->status_id,
+            "dpi" => $user->dpi,
+            "role_name" => $user->role_name,
+            "role_id" => $user->role_id,
+            "district" => $user->district,
+            "districtIds" => $user->districtIds,
+            "office" => $user->office,
+            "last_login" => $user->last_login,
+            "observations" => $user->observations,
+            "phone" => $user->phone,
+            "last_changed_password" => $user->last_changed_password,
+            "created_at" => $user->created_at,
+            "updated_at" => $user->updated_at,
         ];
 
         return response()->json([
@@ -167,30 +255,61 @@ class UserController extends Controller
             ], 404);
         }
 
+        // Evitar que "" o null en password cause error
+        if ($request->has('password') && empty($request->password)) {
+            $request->merge(['password' => null]);
+        }
+
+
         // ✅ Validación
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => [
-                'required',
-                'email',
-                Rule::unique('users', 'email')->ignore($user->id),
+        $validated = $request->validate(
+            [
+                'name' => 'required|string|max:255',
+
+                'email' => [
+                    'required',
+                    'email',
+                    'unique:users,email,' . $user->id,
+                    // Rule::unique('users', 'email')->ignore($user->id), // <-- Correcto
+                ],
+
+                // Permite no enviar password en el update
+                'password' => 'nullable|string|min:8',
+
+                'status' => 'nullable|integer|exists:employee_statuses,id',
+
+                'dpi' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'unique:users,dpi,' . $user->id,
+                    // Rule::unique('users', 'dpi')->ignore($user->id), // <-- Correcto
+                ],
+
+                'phone' => 'nullable|string|max:20',
+                'district' => 'nullable|array',
+                'observations' => 'nullable|string',
+
+                'role_id' => [
+                    'required',
+                    Rule::exists('roles', 'id'),
+                ],
             ],
-            'password' => 'nullable|string|min:8',
-            'status' => 'nullable|integer|in:0,1',
-            'dpi' => [
-                'required',
-                'string',
-                'max:20',
-                Rule::unique('users', 'dpi')->ignore($user->id),
-            ],
-            'phone' => 'nullable|string|max:20',
-            'district' => 'nullable|array',
-            'observations' => 'nullable|string',
-            'role_id' => [
-                'required',
-                Rule::exists('roles', 'id'),
-            ],
-        ]);
+            [
+                // Mensajes personalizados
+                'name.required' => 'El nombre es obligatorio.',
+                'email.required' => 'El correo electrónico es obligatorio.',
+                'email.email' => 'El correo electrónico no tiene un formato válido.',
+                'email.unique' => 'El correo electrónico ya está registrado.',
+                'password.min' => 'La contraseña debe tener al menos :min caracteres.',
+                'dpi.required' => 'El DPI es obligatorio.',
+                'dpi.unique' => 'El DPI ya está registrado.',
+                'district.array' => 'El distrito debe ser un arreglo válido.',
+                'role_id.required' => 'Debe seleccionar un rol.',
+                'role_id.exists' => 'El rol seleccionado no existe.',
+            ]
+        );
+
 
         // ✅ Actualizar datos del usuario
         $user->update([
@@ -203,9 +322,15 @@ class UserController extends Controller
             'dpi' => $validated['dpi'],
             'phone' => $validated['phone'] ?? null,
             'district' => isset($validated['district'])
-                ? json_encode(['districts' => $validated['district']])
-                : $user->district,
+                ? $validated['district']
+                : null,
+            'office' => isset($validated['office'])
+                ? $validated['office']
+                : null,
             'observations' => $validated['observations'] ?? $user->observations,
+            'last_changed_password' => isset($validated['password'])
+                ? now()
+                : $user->last_changed_password,
         ]);
 
         // ✅ Actualizar rol
@@ -230,7 +355,8 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function getRoles(){
+    public function getRoles()
+    {
         $roles = Role::select('id', 'name')->get();
         return response()->json([
             'error' => false,
@@ -239,7 +365,8 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function getDistricts(){
+    public function getDistricts()
+    {
         $districts = District::select('id', 'code')->get();
         return response()->json([
             'error' => false,

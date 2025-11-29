@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\EmployeesImport;
 use App\Models\Employee;
+use App\Models\EmployeeStatus;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -246,5 +247,14 @@ class EmployeeController extends Controller
                 'error' => $e->getMessage(),
             ], 422);
         }
+    }
+
+    public function getStatusEmployees(){
+        $status = EmployeeStatus::select('id', 'name', 'slug')->get();
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $status,
+        ], 200);
     }
 }

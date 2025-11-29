@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\EmployeeStatus;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,15 @@ class AuthController extends Controller
         if (! $user || ! Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Credenciales inválidas'], 401);
         }
+
+        $status_employee = EmployeeStatus::where('id', $user->id)->first();
+        if ($status_employee->slug == 'inactive') {
+            return response()->json(['error' => 'Usuario inactivo'], 401);
+        }
+
+        $user->update([
+            'last_login' => now(),
+        ]);
 
         $token = $user->createToken('api_token', ['*'], now()->addHours(2))->plainTextToken;
 
