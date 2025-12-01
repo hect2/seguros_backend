@@ -47,6 +47,11 @@ class PermissionSeeder extends Seeder
             'users_view',
             'users_create',
             'users_edit',
+
+            // Business
+            'business_view',
+            'business_create',
+            'business_edit',
         ];
 
         foreach ($permissions as $permission) {

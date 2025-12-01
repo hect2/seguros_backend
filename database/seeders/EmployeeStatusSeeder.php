@@ -34,6 +34,22 @@ class EmployeeStatusSeeder extends Seeder
                 'slug' => 'inactive',
                 'description' => 'Empleado inactivo o dado de baja',
             ],
+            [
+                'name' => 'Guardia Temporal',
+                'slug' => 'temporary_guard',
+                'description' => 'Empleado en estado de guardia temporal',
+            ],
+            [
+                'name' => 'Suspendido',
+                'slug' => 'suspended',
+                'description' => 'Empleado actualmente suspendido',
+            ],
+            [
+                'name' => 'Capacitación',
+                'slug' => 'training',
+                'description' => 'Empleado en proceso de capacitación',
+            ],
+
         ];
 
         foreach ($status as $key => $value) {

@@ -49,6 +49,10 @@ class RolePermissionSeeder extends Seeder
             'users_view',
             'users_create',
             'users_edit',
+
+            'business_view',
+            'business_create',
+            'business_edit',
         ]);
 
         // 👨‍💼 Supervisor: solo revisión y visualización

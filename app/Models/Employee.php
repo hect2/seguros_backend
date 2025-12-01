@@ -21,10 +21,12 @@ class Employee extends Model
         'email',
         'files',
         'status_id',
+        'digessp_fecha_vencimiento',
     ];
 
     protected $casts = [
-        'files' => 'array'
+        'files' => 'array',
+        'birth_date' => 'date:Y-m-d',
     ];
 
     public function positions()

@@ -4,6 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\Employee;
 use App\Models\EmployeeStatus;
+use App\Models\Office;
+use App\Models\Position;
+use App\Models\PositionType;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -14,36 +17,35 @@ class EmployeeSeeder extends Seeder
      */
     public function run(): void
     {
-        $employees = [
-            [
-                'full_name' => 'John Doe',
-                'dpi' => '1234567890101',
-                'birth_date' => '1990-04-12',
-                'phone' => '55581234',
-                'email' => 'john@example.com',
+        for ($i = 0; $i < 20; $i++) {
+            $digessp = fake()->date();
+            Employee::create([
+                'full_name' => fake()->name(),
+                'dpi' => fake()->unique()->numerify('#############'), // 13 dígitos
+                'birth_date' => fake()->date(),
+                'phone' => fake()->numerify('########'), // 8 dígitos GT
+                'email' => fake()->unique()->safeEmail(),
                 'files' => null,
                 'status_id' => EmployeeStatus::inRandomOrder()->first()->id,
-            ],
-            [
-                'full_name' => 'Jane Smith',
-                'dpi' => '9876543210101',
-                'birth_date' => '1995-09-22',
-                'phone' => '55591234',
-                'email' => 'jane@example.com',
-                'files' => null,
-                'status_id' => EmployeeStatus::inRandomOrder()->first()->id,
-            ],
-            [
-                'full_name' => 'Carlos Ramirez',
-                'dpi' => '2020202020202',
-                'birth_date' => '1988-12-05',
-                'phone' => '55671234',
-                'email' => 'carlos@example.com',
-                'files' => null,
-                'status_id' => EmployeeStatus::inRandomOrder()->first()->id,
-            ],
-        ];
+                'digessp_fecha_vencimiento'=> fake()->randomElement([null, $digessp]),
+            ]);
+        }
 
-        Employee::insert($employees);
+        $employments = Employee::all();
+        foreach ($employments as $employment) {
+            $office = Office::inRandomOrder()->first();
+            $operative_id = PositionType::inRandomOrder()->first()->id;
+
+            Position::create([
+                'employee_id' => $employment->id,
+                'office_id' => $office->id,
+                'district_id' => $office->district_id,
+                'admin_position_type_id' => PositionType::inRandomOrder()->first()->id,
+                'operative_position_type_id' => fake()->randomElement([null, $operative_id]),
+                'initial_salary' => fake()->numberBetween(3000, 5000),
+                'bonuses' => fake()->numberBetween(0, 500),
+                'status' => fake()->randomElement([1, 0]),
+            ]);
+        }
     }
 }

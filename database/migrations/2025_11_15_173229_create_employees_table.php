@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->json('files')->nullable();
+            $table->date('digessp_fecha_vencimiento')->nullable();
             $table->foreignId('status_id')->constrained('employee_statuses');
             $table->timestamps();
         });
