@@ -13,6 +13,7 @@ use App\Http\Controllers\Reports\DigesspReportController;
 use App\Http\Controllers\Reports\GeneralReportController;
 use App\Http\Controllers\Reports\OfficeSummaryController;
 use App\Http\Controllers\Reports\PNCReportController;
+use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\UserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/list/status-employees → getStatusEmployees()
             Route::get('/status-employees', [EmployeeController::class, 'getStatusEmployees'])
                 ->name('getStatusEmployees');
+
+            // GET /api/list/positiontypes → getPositionTypes()
+            Route::get('/positiontypes', [EmployeeController::class, 'getPositionTypes'])
+                ->name('getPositionTypes');
         });
 
     Route::prefix('counts')
@@ -280,7 +285,7 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
                 ->name('index');
 
             // GET /api/business/{id} → show()
-            Route::get('/{id}', [BusinessController::class, 'show'])
+            Route::get('/show/{id}', [BusinessController::class, 'show'])
                 ->name('show');
 
             // POST /api/business → store()
@@ -292,10 +297,15 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::put('/{id}', [BusinessController::class, 'update'])
                 ->name('update')
                 ->middleware('permission:business_edit');
+        });
 
-            // DELETE /api/business/{id} → destroy()
-            Route::delete('/{id}', [BusinessController::class, 'destroy'])
-                ->name('destroy')
-                ->middleware('permission:business_delete');
+    Route::prefix('reports')
+        ->name('reports.')
+        ->middleware('permission:reports_view')
+        ->group(function () {
+
+            // GET /api/reports → index()
+            Route::post('/', [ReportsController::class, 'index'])
+                ->name('index');
         });
 });

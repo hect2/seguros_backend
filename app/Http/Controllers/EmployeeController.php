@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Imports\EmployeesImport;
 use App\Models\Employee;
 use App\Models\EmployeeStatus;
+use App\Models\PositionType;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
@@ -33,8 +34,8 @@ class EmployeeController extends Controller
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('employees.full_name', 'like', "%{$search}%")
-                  ->orWhere('employees.email', 'like', "%{$search}%")
-                  ->orWhere('employees.dpi', 'like', "%{$search}%");
+                    ->orWhere('employees.email', 'like', "%{$search}%")
+                    ->orWhere('employees.dpi', 'like', "%{$search}%");
             });
         }
 
@@ -55,7 +56,30 @@ class EmployeeController extends Controller
         $sortBy = $request->query('sort_by', 'employees.id');
         $sortDir = $request->query('', 'asc');
 
-        $employees = $query->select('employees.id', 'employees.dpi', 'employees.birth_date', 'employees.phone', 'employees.email', 'employee_statuses.name', 'employees.files')->orderBy($sortBy, $sortDir)->paginate($perPage);
+        $employees = $query->select('employees.id', 'employees.full_name', 'employees.dpi', 'employees.birth_date', 'employees.phone', 'employees.email', 'employee_statuses.slug as status_slug', 'employee_statuses.name as status_name', 'employees.files')->orderBy($sortBy, $sortDir)
+            ->paginate($perPage);
+
+        $employees->getCollection()->transform(function ($employee) {
+            $data = $employee->positions()
+                ->with('office.district', 'adminPositionType', 'operativePositionType')
+                ->get()
+                ->map(function ($position) {
+                    return [
+                        'office_code' => $position->office->code,
+                        'district_code' => $position->office->district->code,
+                        'admin_position' => $position->adminPositionType?->name ?? null,
+                        'operative_position' => $position->operativePositionType?->name ?? null,
+                    ];
+                })
+                ->unique('district_code')  // ahora sí existe
+                ->values()
+                ->first();
+
+            $employee->data = $data;
+
+            return $employee;
+        });
+
 
         return response()->json($employees, 200);
     }
@@ -72,44 +96,36 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string',
             'email' => 'nullable|string',
             'status_id' => 'required|integer|exists:employee_statuses,id',
-
-            'office_id' => 'required|integer|exists:offices,id',
-            'district_id' => 'required|integer|exists:districts,id',
-            'admin_position_id' => 'required|integer|exists:position_types,id',
-            'operative_position_id' => 'nullable|integer|exists:position_types,id',
-
-            'salary' => 'required|numeric|min:0',
-            'bonus' => 'nullable|numeric|min:0',
-
-            'description_files' => 'nullable|string',
-            'files' => 'nullable|array',
+            'digessp_fecha_vencimiento' => 'nullable|date',
         ]);
 
         $employee = Employee::create([
-            'full_name'=> $validated['full_name'],
-            'dpi'=> $validated['dpi'],
-            'birth_date'=> $validated['birth_date'],
-            'phone'=> $validated['phone'],
-            'email'=> $validated['email'],
-            'status_id'=> $validated['status_id'],
-
-            'office_id'=> $validated['office_id'],
-            'district_id'=> $validated['district_id'],
-            'admin_position_id'=> $validated['admin_position_id'],
-            'operative_position_id'=> $validated['operative_position_id'],
-
-            'salary'=> $validated['salary'],
-            'bonus'=> $validated['bonus'],
+            'full_name' => $validated['full_name'],
+            'dpi' => $validated['dpi'],
+            'birth_date' => $validated['birth_date'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'status_id' => $validated['status_id'],
         ]);
 
-        $files_saved = $service->process_files($validated['files'],'employee', $employee->id, 'employee');
+        $positions = $employee->positions()->create([
+            'office_id' => $validated['office_id'],
+            'district_id' => $validated['district_id'],
+            'initial_salary' => $validated['salary'],
+            'admin_position_type_id' => $validated['admin_position_id'],
+            'operative_position_type_id' => $validated['operative_position_id'],
+            'bonuses' => $validated['bonus'],
+            'status' => 1,
+        ]);
+
+        $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
         $files = [
             'description_files' => $validated['description_files'],
             "files" => $files_saved,
         ];
 
         $employee->update([
-            'files'=> $files,
+            'files' => $files,
         ]);
 
 
@@ -187,7 +203,7 @@ class EmployeeController extends Controller
         ]);
 
         $files = $employee->files['files'];
-        $files_saved = $service->process_files($validated['files'],'employee', $employee->id, 'employee');
+        $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
         if (!empty($files_saved)) {
             $files = array_merge($files_saved, $files);
         }
@@ -198,22 +214,22 @@ class EmployeeController extends Controller
 
 
         $employee->update([
-            'full_name'=> $validated['full_name'],
-            'dpi'=> $validated['dpi'],
-            'birth_date'=> $validated['birth_date'],
-            'phone'=> $validated['phone'],
-            'email'=> $validated['email'],
-            'status_id'=> $validated['status_id'],
+            'full_name' => $validated['full_name'],
+            'dpi' => $validated['dpi'],
+            'birth_date' => $validated['birth_date'],
+            'phone' => $validated['phone'],
+            'email' => $validated['email'],
+            'status_id' => $validated['status_id'],
 
-            'office_id'=> $validated['office_id'],
-            'district_id'=> $validated['district_id'],
-            'admin_position_id'=> $validated['admin_position_id'],
-            'operative_position_id'=> $validated['operative_position_id'],
+            'office_id' => $validated['office_id'],
+            'district_id' => $validated['district_id'],
+            'admin_position_id' => $validated['admin_position_id'],
+            'operative_position_id' => $validated['operative_position_id'],
 
-            'salary'=> $validated['salary'],
-            'bonus'=> $validated['bonus'],
+            'salary' => $validated['salary'],
+            'bonus' => $validated['bonus'],
 
-            'files'=> $files,
+            'files' => $files,
         ]);
 
         return response()->json([
@@ -249,12 +265,23 @@ class EmployeeController extends Controller
         }
     }
 
-    public function getStatusEmployees(){
+    public function getStatusEmployees()
+    {
         $status = EmployeeStatus::select('id', 'name', 'slug')->get();
         return response()->json([
             'error' => false,
             'code' => 200,
             'data' => $status,
+        ], 200);
+    }
+
+    public function getPositionTypes()
+    {
+        $position_types = PositionType::select('id', 'name')->get();
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $position_types,
         ], 200);
     }
 }
