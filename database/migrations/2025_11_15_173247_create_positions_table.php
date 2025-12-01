@@ -16,6 +16,8 @@ return new class extends Migration
             $table->unsignedBigInteger('employee_id');
             $table->unsignedBigInteger('office_id');
             $table->unsignedBigInteger('district_id');
+            $table->unsignedBigInteger('admin_position_type_id');
+            $table->unsignedBigInteger('operative_position_type_id')->nullable();
             $table->decimal('initial_salary', 10, 2);
             $table->decimal('bonuses', 10, 2)->nullable();
             $table->integer('status')->default(1);
@@ -24,6 +26,8 @@ return new class extends Migration
             $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
             $table->foreign('office_id')->references('id')->on('offices');
             $table->foreign('district_id')->references('id')->on('districts');
+            $table->foreign('admin_position_type_id')->references('id')->on('position_types');
+            $table->foreign('operative_position_type_id')->references('id')->on('position_types');
         });
     }
 

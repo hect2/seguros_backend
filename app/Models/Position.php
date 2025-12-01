@@ -17,12 +17,14 @@ class Position extends Model
         'employee_id',
         'office_id',
         'district_id',
+        'admin_position_type_id',
+        'operative_position_type_id',
         'initial_salary',
         'bonuses',
         'status',
     ];
 
-    public function employee()
+    public function employees()
     {
         return $this->belongsTo(Employee::class, 'employee_id', 'id');
     }
@@ -36,4 +38,15 @@ class Position extends Model
     {
         return $this->belongsTo(District::class, 'district_id', 'id');
     }
+
+    public function adminPositionType()
+    {
+        return $this->belongsTo(PositionType::class, 'admin_position_type_id', 'id');
+    }
+
+    public function operativePositionType()
+    {
+        return $this->belongsTo(PositionType::class, 'operative_position_type_id', 'id');
+    }
 }
+

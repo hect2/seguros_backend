@@ -12,7 +12,7 @@ class BusinessSeeder extends Seeder
         Business::create([
             'name' => fake()->name(),
             'direction' => fake()->city(),
-            'phone' => fake()->phone(),
+            'phone' => fake()->phoneNumber(),
         ]);
     }
 }

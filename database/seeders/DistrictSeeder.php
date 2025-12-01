@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Business;
 use App\Models\District;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -27,6 +28,7 @@ class DistrictSeeder extends Seeder
                 'name' => ucfirst($faker->unique()->city) . ' District',
                 'description' => $faker->sentence(6),
                 'status' => $faker->randomElement([0, 1]),
+                'business_id' => Business::inRandomOrder()->first()->id
             ];
         }
 

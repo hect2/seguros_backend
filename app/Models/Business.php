@@ -9,14 +9,20 @@ class Business extends Model
 {
     use HasFactory;
 
+    protected $table = 'business';
+    protected $primaryKey = 'id';
+    public $incrementing = true;
+    protected $keyType = 'int';
+
     protected $fillable = [
         'name',
         'direction',
         'phone',
+        'status',
     ];
 
     public function distrito()
     {
-        return $this->hasMany(Distrito::class);
+        return $this->hasMany(District::class);
     }
 }
