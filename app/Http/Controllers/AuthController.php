@@ -17,7 +17,7 @@ class AuthController extends Controller
             return response()->json(['error' => 'Credenciales inválidas'], 401);
         }
 
-        $status_employee = EmployeeStatus::where('id', $user->id)->first();
+        $status_employee = EmployeeStatus::where('id', $user->status)->first();
         if ($status_employee->slug == 'inactive') {
             return response()->json(['error' => 'Usuario inactivo'], 401);
         }
