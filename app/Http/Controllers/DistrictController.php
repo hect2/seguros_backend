@@ -121,6 +121,7 @@ class DistrictController extends Controller
             'name' => 'sometimes|string',
             'description' => 'nullable|string',
             'status' => 'sometimes|integer|in:0,1',
+            'business_id' => 'integer|exists:business,id',
         ]);
 
         $district->update($validated);

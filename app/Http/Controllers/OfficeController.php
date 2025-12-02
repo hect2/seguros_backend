@@ -46,7 +46,7 @@ class OfficeController extends Controller
         $sortBy = $request->query('sort_by', 'id');
         $sortDir = $request->query('', 'asc');
 
-        $offices = $query->orderBy($sortBy, $sortDir)->paginate($perPage);
+        $offices = $query->with('district')->orderBy($sortBy, $sortDir)->paginate($perPage);
 
         return response()->json($offices, 200);
     }

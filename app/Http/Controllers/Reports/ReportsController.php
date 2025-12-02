@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Models\Business;
+use App\Models\District;
 use App\Models\Employee;
 use App\Models\EmployeeStatus;
 use App\Models\Office;
@@ -22,7 +23,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client',
+            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region',
             'format' => 'nullable|string|in:json,pdf,xlsx,csv',
             'office_id' => 'nullable|exists:offices,id',
             'start_date' => 'nullable|date',
@@ -263,6 +264,55 @@ class ReportsController extends Controller
             'top_client_name' => $topClient ? $topClient->name : 'N/A',
             'offices' => $offices,
             'totals' => $totals,
+        ];
+    }
+
+    public function getGlobalDistributionByRegion(Request $request)
+    {
+        $districts = District::where('status', 1)
+            ->withCount(['offices' => function ($query) {
+                $query->where('status', 1);
+            }])
+            ->get();
+
+        $districtsData = $districts->map(function ($district) {
+            return [
+                'code' => $district->code,
+                'total' => $district->offices_count,
+            ];
+        });
+
+        $totalOffices = $districts->sum('offices_count');
+
+        return [
+            'totals' => $totalOffices,
+            'districts' => $districtsData,
+        ];
+    }
+
+    public function getDistributionByRegion(Request $request)
+    {
+        $districts = District::with(['offices' => function ($query) {
+            $query->where('status', 1)->withCount('positions');
+        }])->get();
+
+        $districtsData = $districts->map(function ($district) {
+            $officesData = $district->offices->map(function ($office) {
+                return [
+                    'code' => $office->code,
+                    'total' => $office->positions_count,
+                ];
+            });
+
+            return [
+                'code' => $district->code,
+                'total' => $officesData->sum('total'),
+                'offices' => $officesData,
+            ];
+        });
+
+        return [
+            'districts' => $districtsData,
         ];
     }
 

@@ -311,5 +311,13 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/reports → index()
             Route::post('/', [ReportsController::class, 'index'])
                 ->name('index');
+
+            // GET /api/global-distribution-by-region → getGlobalDistributionByRegion()
+            Route::get('/global-distribution-by-region', [ReportsController::class, 'getGlobalDistributionByRegion'])
+                ->name('getGlobalDistributionByRegion');
+
+            // GET /api/distribution-by-region → getDistributionByRegion()
+            Route::get('/distribution-by-region', [ReportsController::class, 'getDistributionByRegion'])
+                ->name('getDistributionByRegion');
         });
 });
