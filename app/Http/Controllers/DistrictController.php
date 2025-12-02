@@ -57,6 +57,7 @@ class DistrictController extends Controller
             'name' => 'required|string',
             'description' => 'nullable|string',
             'status' => 'integer|in:0,1',
+            'business_id' => 'integer|exists:business,id',
         ]);
 
         $district = District::create($validated);
@@ -82,7 +83,7 @@ class DistrictController extends Controller
      */
     public function show($id)
     {
-        $district = District::find($id);
+        $district = District::with('offices')->find($id);
 
         if (!$district) {
             return response()->json([
