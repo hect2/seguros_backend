@@ -56,6 +56,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/list/positiontypes → getPositionTypes()
             Route::get('/positiontypes', [EmployeeController::class, 'getPositionTypes'])
                 ->name('getPositionTypes');
+
+            // GET /api/list/business → getBusinesses()
+            Route::get('/business', [BusinessController::class, 'getBusinesses'])
+                ->name('getBusinesses');
         });
 
     Route::prefix('counts')
