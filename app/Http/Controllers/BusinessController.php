@@ -70,7 +70,7 @@ class BusinessController extends Controller
 
     public function show($id)
     {
-        $business = Business::findOrFail($id);
+        $business = Business::with('distrito')->findOrFail($id);
 
         if (!$business) {
             return response()->json([
@@ -116,12 +116,44 @@ class BusinessController extends Controller
         ], 200);
     }
 
+    public function destroy($id)
+    {
+        $business = Business::find($id);
+
+        if (!$business) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        $business->delete();
+
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $business,
+            'message' => $this->deleteSuccessMessage,
+        ], 200);
+    }
+
     public function getCount()
     {
         $total = Business::where('status', 1)->count();
 
         return response()->json([
             'total' => $total,
+        ], 200);
+    }
+
+    public function getBusinesses()
+    {
+        $business = Business::select('id', 'name')->where('status', 1)->get();
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $business,
         ], 200);
     }
 }
