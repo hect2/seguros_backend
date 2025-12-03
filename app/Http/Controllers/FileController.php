@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Incident;
+use App\Models\MessageIncident;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -26,6 +27,8 @@ class FileController extends Controller
 
         if ($validated['module'] === 'incidents') {
             $record = Incident::find($validated['id']);
+        } else if ($validated['module'] === 'messages') {
+            $record = MessageIncident::find($validated['id']);
         }
 
         if (!$record) {
@@ -37,8 +40,15 @@ class FileController extends Controller
         }
 
         // ---- Buscar archivo dentro del JSON ----
-        $file = collect($record->files)
-            ->firstWhere('filename', $validated['filename']);
+        $file = null;
+        if ($validated['module'] === 'incidents') {
+            $file = collect($record->files)
+                ->firstWhere('filename', $validated['filename']);
+        } else if ($validated['module'] === 'messages') {
+            $file = collect($record->attachments)
+                ->firstWhere('filename', $validated['filename']);
+        }
+
 
         if (!$file) {
             return response()->json([
