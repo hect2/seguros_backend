@@ -302,7 +302,7 @@ class UserController extends Controller
                 'dpi.required' => 'El DPI es obligatorio.',
                 'dpi.unique' => 'El DPI ya está registrado.',
                 'district.array' => 'El distrito debe ser un arreglo válido.',
-                'role_id.required' => 'Debe seleccionar un rol.',
+                // 'role_id.required' => 'Debe seleccionar un rol.',
                 'role_id.exists' => 'El rol seleccionado no existe.',
             ]
         );
