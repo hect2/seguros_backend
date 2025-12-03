@@ -18,7 +18,7 @@ class Base64FileService
         $path = 'uploads/' . $path;
 
         // Crear carpeta si no existe
-        Storage::disk('local')->makeDirectory($path, 0755, true);
+        Storage::disk('public')->makeDirectory($path, 0755, true);
 
         // Separar metadata y contenido
         [$meta, $content] = explode(',', $base64);
@@ -43,8 +43,8 @@ class Base64FileService
         $bytes = base64_decode($content);
 
         // Guardar archivo
-        Storage::disk('local')->put("$path/$filename", $bytes);
-        $url = Storage::disk('local')->url("$path/$filename");
+        Storage::disk('public')->put("$path/$filename", $bytes);
+        $url = Storage::disk('public')->url("$path/$filename");
         Log::error("URL file: " . $url);
 
         return [

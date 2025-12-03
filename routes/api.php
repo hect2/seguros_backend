@@ -15,7 +15,7 @@ use App\Http\Controllers\Reports\OfficeSummaryController;
 use App\Http\Controllers\Reports\PNCReportController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\UserController;
-use Illuminate\Http\Request;
+use App\Http\Controllers\FileController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -60,6 +60,11 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/list/business → getBusinesses()
             Route::get('/business', [BusinessController::class, 'getBusinesses'])
                 ->name('getBusinesses');
+
+            // GET /api/list/users → getUsers()
+            Route::get('/users', [UserController::class, 'getUsers'])
+                ->name('getUsers');
+
         });
 
     Route::prefix('counts')
@@ -206,6 +211,11 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
                 ->name('update')
                 ->middleware('permission:incidents_edit');
 
+            // PUT /api/incidents/assign/{id} → update()
+            Route::put('/assign/{id}', [IncidentController::class, 'assign'])
+                ->name('assign')
+                ->middleware('permission:incidents_edit');
+
             // GET /api/incidents/reports → index()
             Route::get('/reports', [ReportIncidentController::class, 'index'])
                 ->name('reports');
@@ -320,4 +330,8 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::get('/distribution-by-region', [ReportsController::class, 'getDistributionByRegion'])
                 ->name('getDistributionByRegion');
         });
+
+    // GET /api/image/{filename} → show()
+    Route::get('/file', [FileController::class, 'show']);
+
 });
