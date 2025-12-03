@@ -47,7 +47,7 @@ class UserController extends Controller
         if ($district_ids = $request->query('district_ids')) {
             $district_ids = array_map('intval', $district_ids);
             $query->whereNotNull('district')
-                    ->whereJsonContains('district', $district_ids);
+                ->whereJsonContains('district', $district_ids);
         }
 
 
@@ -128,7 +128,8 @@ class UserController extends Controller
         if (!$user || !$user->exists) {
             return response()->json([
                 'error' => true,
-                'code' => 500,district,
+                'code' => 500,
+                district,
                 'message' => $this->storeErrorMessage,
             ], 500);
         }
@@ -260,10 +261,10 @@ class UserController extends Controller
         // ✅ Validación
         $validated = $request->validate(
             [
-                'name' => 'required|string|max:255',
+                'name' => 'nullable|string|max:255',
 
                 'email' => [
-                    'required',
+                    'nullable',
                     'email',
                     'unique:users,email,' . $user->id,
                     // Rule::unique('users', 'email')->ignore($user->id), // <-- Correcto
@@ -275,7 +276,7 @@ class UserController extends Controller
                 'status' => 'nullable|integer|exists:employee_statuses,id',
 
                 'dpi' => [
-                    'required',
+                    'nullable',
                     'string',
                     'max:20',
                     'unique:users,dpi,' . $user->id,
@@ -287,7 +288,7 @@ class UserController extends Controller
                 'observations' => 'nullable|string',
 
                 'role_id' => [
-                    'required',
+                    'nullable',
                     Rule::exists('roles', 'id'),
                 ],
             ],
@@ -368,6 +369,20 @@ class UserController extends Controller
             'error' => false,
             'code' => 200,
             'data' => $districts,
+        ], 200);
+    }
+
+    public function getUsers()
+    {
+        $users = User::select('id', 'name')->get();
+        $data = $users->map(fn($u) => [
+            'id' => $u->id,
+            'name' => $u->name,
+        ]);
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $data,
         ], 200);
     }
 }
