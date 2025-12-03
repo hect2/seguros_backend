@@ -53,8 +53,10 @@ class MessageIncident extends Model
         return $this->belongsTo(MessageIncident::class, 'id_message_reply');
     }
 
+     // 🔹 Relación recursiva para replies
     public function replies()
     {
-        return $this->hasMany(MessageIncident::class, 'id_message_reply');
+        return $this->hasMany(MessageIncident::class, 'id_message_reply')
+                    ->with('replies'); // 🔹 carga recursiva
     }
 }

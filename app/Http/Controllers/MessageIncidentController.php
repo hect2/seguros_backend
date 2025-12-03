@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Incident;
 use App\Models\MessageIncident;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
@@ -21,9 +22,10 @@ class MessageIncidentController extends Controller
      */
     public function index($incident_id)
     {
-        $messages = MessageIncident::where('id_incident', $incident_id)
+        $messages = MessageIncident::with('replies')
+            ->where('id_incident', $incident_id)
+            ->where('id_message_reply', null)
             ->orderBy('id', 'ASC')
-            // ->with(['user', 'replies'])
             ->get();
 
         return response()->json([
@@ -39,23 +41,31 @@ class MessageIncidentController extends Controller
     {
         $validated = $request->validate([
             'id_message_reply' => 'nullable|integer|exists:message_incidents,id',
-            'id_incident'      => 'required|integer|exists:incidents,id',
-            'id_user'          => 'required|integer|exists:users,id',
-            'message'          => 'required|string',
-            'attachments'      => 'nullable|array',
+            'id_incident' => 'required|integer|exists:incidents,id',
+            'id_user' => 'required|integer|exists:users,id',
+            'message' => 'required|strin g',
+            'attachments' => 'nullable|array',
+            'status_id' => 'nullable|integer|exists:incident_statuses,id',
         ]);
+
+        if (isset($validated['status_id'])) {
+            $incident = Incident::find($validated['id_incident']);
+            $incident->update([
+                'status_id' => $validated['status_id'],
+            ]);
+        }
 
         $message = MessageIncident::create([
-            'id_message_reply'=> $validated['id_message_reply'] ?? null,
-            'id_incident'=> $validated['id_incident'],
-            'id_user'=> $validated['id_user'],
-            'message'=> $validated['message'],
+            'id_message_reply' => $validated['id_message_reply'] ?? null,
+            'id_incident' => $validated['id_incident'],
+            'id_user' => $validated['id_user'],
+            'message' => $validated['message'],
         ]);
 
-        $files_saved = $service->process_files($validated['attachments'],'incidents/messages', $message->id);
+        $files_saved = $service->process_files($validated['attachments'], 'incidents/messages', $message->id);
 
         $message->update([
-            'attachments'=> $files_saved,
+            'attachments' => $files_saved,
         ]);
 
         if (!$message || !$message->exists) {
@@ -90,21 +100,21 @@ class MessageIncidentController extends Controller
         }
 
         $validated = $request->validate([
-            'message'     => 'sometimes|string',
+            'message' => 'sometimes|string',
             'attachments' => 'sometimes|array',
         ]);
 
         $files = $message->attachments;
         if (!$validated['attachments']) {
-            $files_saved= $service->process_files($validated['attachments'],'incidents/messages', $message->id);
+            $files_saved = $service->process_files($validated['attachments'], 'incidents/messages', $message->id);
             if (!empty($files_saved)) {
                 $files = array_merge($files_saved, $files);
             }
         }
 
         $message->update([
-            'message'=> $validated['message'],
-            'attachments'=> $files,
+            'message' => $validated['message'],
+            'attachments' => $files,
         ]);
 
         return response()->json([
