@@ -29,7 +29,7 @@ class IncidentController extends Controller
             ->leftJoin('types', 'types.id', '=', 'incidents.type_id')
             ->leftJoin('criticals', 'criticals.id', '=', 'incidents.criticity_id')
             ->leftJoin('incident_statuses', 'incident_statuses.id', '=', 'incidents.status_id')
-            ;
+        ;
 
         // Filtros opcionales
         if ($search = $request->query('search')) {
@@ -95,20 +95,20 @@ class IncidentController extends Controller
         ]);
 
         $incident = Incident::create([
-            'title'=> $validated['title'],
-            'description'=> $validated['description'],
-            'type_id'=> $validated['type_id'],
-            'office_id'=> $validated['office_id'],
-            'criticity_id'=> $validated['criticity_id'],
-            'status_id'=> $validated['status'],
-            'user_reported'=> $validated['user_reported'],
-            'user_assigned'=> $validated['user_assigned'],
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'type_id' => $validated['type_id'],
+            'office_id' => $validated['office_id'],
+            'criticity_id' => $validated['criticity_id'],
+            'status_id' => $validated['status'],
+            'user_reported' => $validated['user_reported'],
+            'user_assigned' => $validated['user_assigned'],
         ]);
 
-        $files_saved = $service->process_files($validated['files'],'incidents', $incident->id);
+        $files_saved = $service->process_files($validated['files'], 'incidents', $incident->id);
 
         $incident->update([
-            'files'=> $files_saved,
+            'files' => $files_saved,
         ]);
 
         if (!$incident || !$incident->exists) {
@@ -202,20 +202,20 @@ class IncidentController extends Controller
         ]);
 
         $files = $incident->files;
-        $files_saved= $service->process_files($validated['files'],'incidents', $incident->id);
+        $files_saved = $service->process_files($validated['files'], 'incidents', $incident->id);
         if (!empty($files_saved)) {
             $files = array_merge($files_saved, $files);
         }
 
         $incident->update([
-            'title'=> $validated['title'],
-            'description'=> $validated['description'],
-            'type_id'=> $validated['type_id'],
-            'office_id'=> $validated['office_id'],
-            'criticity_id'=> $validated['criticity_id'],
-            'status_id'=> $validated['status'],
-            'user_assigned'=> $validated['user_assigned'],
-            'files'=> $files,
+            'title' => $validated['title'],
+            'description' => $validated['description'],
+            'type_id' => $validated['type_id'],
+            'office_id' => $validated['office_id'],
+            'criticity_id' => $validated['criticity_id'],
+            'status_id' => $validated['status'],
+            'user_assigned' => $validated['user_assigned'],
+            'files' => $files,
         ]);
 
         return response()->json([
@@ -226,7 +226,8 @@ class IncidentController extends Controller
         ], 200);
     }
 
-    public function getOffices(){
+    public function getOffices()
+    {
         $offices = Office::select('id', 'code')->get();
         return response()->json([
             'error' => false,
@@ -235,7 +236,8 @@ class IncidentController extends Controller
         ], 200);
     }
 
-    public function getTypes(){
+    public function getTypes()
+    {
         $types = Type::select('id', 'name')->get();
         return response()->json([
             'error' => false,
@@ -244,12 +246,49 @@ class IncidentController extends Controller
         ], 200);
     }
 
-    public function getCriticals(){
+    public function getCriticals()
+    {
         $criticals = Critical::select('id', 'name', 'slug')->get();
         return response()->json([
             'error' => false,
             'code' => 200,
             'data' => $criticals,
+        ], 200);
+    }
+
+    public function assign(Request $request, $id)
+    {
+        $user = Incident::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        // Validación del campo user_assigned
+        $validated = $request->validate([
+            'user_assigned' => 'required|integer|exists:users,id',
+        ], [
+            'user_assigned.required' => 'Debe asignar un usuario.',
+            'user_assigned.exists' => 'El usuario asignado no existe.',
+        ]);
+
+        // Actualizar
+        $user->update([
+            'user_assigned' => $validated['user_assigned']
+        ]);
+
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => [
+                'id' => $user->id,
+                'user_assigned' => $user->user_assigned,
+            ],
+            'message' => 'Usuario asignado correctamente.',
         ], 200);
     }
 }
