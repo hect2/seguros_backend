@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Critical;
 use App\Models\Incident;
+use App\Models\IncidentStatus;
 use App\Models\Office;
 use App\Models\Type;
 use App\Services\Base64FileService;
@@ -145,9 +146,11 @@ class IncidentController extends Controller
             'files' => $incident->files,
             'status' => $incident->status?->name,
             'status_slug' => $incident->status?->slug,
+            'status_id' => $incident->status?->id,
             'user_reported' => $incident->userReported?->name,
             'user_assigned' => $incident->userAssigned?->name,
             'created_at' => $incident->created_at,
+            'follow_date' => $incident->follow_date,
         ];
 
         if (!$incident) {
@@ -256,6 +259,16 @@ class IncidentController extends Controller
         ], 200);
     }
 
+    public function getIncidentStatus()
+    {
+        $statuses = IncidentStatus::select('id', 'name', 'slug')->get();
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $statuses,
+        ], 200);
+    }
+
     public function assign(Request $request, $id)
     {
         $user = Incident::find($id);
@@ -289,6 +302,42 @@ class IncidentController extends Controller
                 'user_assigned' => $user->user_assigned,
             ],
             'message' => 'Usuario asignado correctamente.',
+        ], 200);
+    }
+
+    public function follow(Request $request, $id)
+    {
+        $incident = Incident::find($id);
+
+        if (!$incident) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        // Validación del campo follow_date
+        $validated = $request->validate([
+            'follow_date' => 'required|date',
+        ], [
+            'follow_date.required' => 'Debe asignar una fecha de seguimiento.',
+            'follow_date.date' => 'La fecha de seguimiento no es válida.',
+        ]);
+
+        // Actualizar
+        $incident->update([
+            'follow_date' => $validated['follow_date']
+        ]);
+
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => [
+                'id' => $incident->id,
+                'follow_date' => $incident->follow_date,
+            ],
+            'message' => 'Fecha de seguimiento actualizada correctamente.',
         ], 200);
     }
 }

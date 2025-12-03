@@ -25,6 +25,7 @@ class Incident extends Model
         'status_id',
         'user_reported',
         'user_assigned',
+        'follow_date',
     ];
 
     protected $casts = [

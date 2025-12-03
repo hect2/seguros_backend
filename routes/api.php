@@ -49,6 +49,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::get('/criticals', [IncidentController::class, 'getCriticals'])
                 ->name('getCriticals');
 
+            // GET /api/list/incident-status → getIncidentStatus()
+            Route::get('/incident-status', [IncidentController::class, 'getIncidentStatus'])
+                ->name('getIncidentStatus');
+
             // GET /api/list/status-employees → getStatusEmployees()
             Route::get('/status-employees', [EmployeeController::class, 'getStatusEmployees'])
                 ->name('getStatusEmployees');
@@ -214,6 +218,11 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // PUT /api/incidents/assign/{id} → update()
             Route::put('/assign/{id}', [IncidentController::class, 'assign'])
                 ->name('assign')
+                ->middleware('permission:incidents_edit');
+
+            // PUT /api/incidents/follow/{id} → follow()
+            Route::put('/follow/{id}', [IncidentController::class, 'follow'])
+                ->name('follow')
                 ->middleware('permission:incidents_edit');
 
             // GET /api/incidents/reports → index()
