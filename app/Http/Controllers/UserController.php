@@ -340,6 +340,8 @@ class UserController extends Controller
         $data_user = [
             'name' => $user->name,
             'email' => $user->email,
+            'dpi' => $user->dpi,
+            'phone' => $user->phone,
             'role_names' => $user->role_names,
             'permission_names' => $user->permission_names
         ];
@@ -369,6 +371,43 @@ class UserController extends Controller
             'error' => false,
             'code' => 200,
             'data' => $districts,
+        ], 200);
+    }
+
+    public function updatePassword(Request $request, $id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if (!Hash::check($validated['current_password'], $user->password)) {
+            return response()->json([
+                'error' => true,
+                'code' => 401,
+                'message' => 'La contraseña actual es incorrecta.',
+            ], 401);
+        }
+
+        $user->update([
+            'password' => Hash::make($validated['new_password']),
+            'last_changed_password' => now(),
+        ]);
+
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'message' => 'Contraseña actualizada correctamente.',
         ], 200);
     }
 

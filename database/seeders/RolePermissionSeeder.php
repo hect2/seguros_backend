@@ -69,13 +69,13 @@ class RolePermissionSeeder extends Seeder
 
         // ⚙️ Operador: tareas básicas (solo ver/crear)
         $operator->syncPermissions([
-            // 'incidents_view',
-            // 'incidents_create',
-            // 'employees_view',
-            // 'reports_view',
-            // 'districts_view',
-            // // 'offices_view',
-            // 'users_view',
+            'incidents_view',
+            'incidents_create',
+            'employees_view',
+            'reports_view',
+            'districts_view',
+            'offices_view',
+            'users_view',
         ]);
     }
 }

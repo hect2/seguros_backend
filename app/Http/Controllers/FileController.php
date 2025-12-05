@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Models\Employee;
 use App\Models\Incident;
 use App\Models\MessageIncident;
 use Illuminate\Support\Facades\Log;
@@ -29,6 +30,8 @@ class FileController extends Controller
             $record = Incident::find($validated['id']);
         } else if ($validated['module'] === 'messages') {
             $record = MessageIncident::find($validated['id']);
+        } else if ($validated['module'] === 'employees') {
+            $record = Employee::find($validated['id']);
         }
 
         if (!$record) {
@@ -46,6 +49,9 @@ class FileController extends Controller
                 ->firstWhere('filename', $validated['filename']);
         } else if ($validated['module'] === 'messages') {
             $file = collect($record->attachments)
+                ->firstWhere('filename', $validated['filename']);
+        } else if ($validated['module'] === 'employees') {
+            $file = collect($record->files['files'])
                 ->firstWhere('filename', $validated['filename']);
         }
 

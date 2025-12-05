@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('employee_id');
             $table->string('name');
-            $table->string('responsible');
+            $table->string('responsible')->nullable();
             $table->dateTime('approval_date')->nullable();
-            $table->integer('status')->default(1);
+            $table->integer('status')->default(0);
             $table->text('description')->nullable();
             $table->timestamps();
 

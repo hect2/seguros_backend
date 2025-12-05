@@ -6,8 +6,10 @@ use App\Imports\EmployeesImport;
 use App\Models\Employee;
 use App\Models\EmployeeStatus;
 use App\Models\PositionType;
+use App\Models\Tracking;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
 class EmployeeController extends Controller
@@ -95,8 +97,25 @@ class EmployeeController extends Controller
             'birth_date' => 'nullable|date',
             'phone' => 'nullable|string',
             'email' => 'nullable|string',
-            'status_id' => 'required|integer|exists:employee_statuses,id',
+            // 'status_id' => 'required|integer|exists:employee_statuses,id',
             'digessp_fecha_vencimiento' => 'nullable|date',
+
+            'office_id' => 'required|integer|exists:offices,id',
+            'district_id' => 'required|integer|exists:districts,id',
+            'admin_position_id' => 'nullable|integer|exists:position_types,id',
+            'operative_position_id' => 'nullable|integer|exists:position_types,id',
+            'salary' => 'required|numeric',
+            'bonus' => 'nullable|numeric',
+            'description_files' => 'nullable|string',
+
+            'files' => 'nullable|array',
+            'files.*.name' => 'required|string',
+            'files.*.file' => 'required|string',
+            'files.*.date_emission' => 'nullable|string',
+            'files.*.type' => 'required|string',
+
+            'user_id' => 'required|integer|exists:users,id',
+            'user_responsible_id' => 'nullable|integer|exists:users,id',
         ]);
 
         $employee = Employee::create([
@@ -105,7 +124,7 @@ class EmployeeController extends Controller
             'birth_date' => $validated['birth_date'],
             'phone' => $validated['phone'],
             'email' => $validated['email'],
-            'status_id' => $validated['status_id'],
+            'status_id' => EmployeeStatus::where('slug', 'pending')->first()->id,
         ]);
 
         $positions = $employee->positions()->create([
@@ -116,6 +135,35 @@ class EmployeeController extends Controller
             'operative_position_type_id' => $validated['operative_position_id'],
             'bonuses' => $validated['bonus'],
             'status' => 1,
+        ]);
+
+        $trackings_nuevo_client = $employee->trackings()->create([
+            'name' => 'new_client',
+            'responsible' => $validated['user_id'],
+            'approval_date' => now(),
+            'status' => 1,
+            'description' => 'Carga de nuevo cliente',
+        ]);
+        $trackings_documents_review = $employee->trackings()->create([
+            'name' => 'documents_review',
+            'responsible' => $validated['user_responsible_id'],
+            'approval_date' => null,
+            'status' => 2,
+            'description' => 'Revisión de documentos',
+        ]);
+        $trackings_validate_account = $employee->trackings()->create([
+            'name' => 'validate_account',
+            'responsible' => null,
+            'approval_date' => null,
+            'status' => 0,
+            'description' => 'Validación de cuenta',
+        ]);
+        $trackings_approve = $employee->trackings()->create([
+            'name' => 'approve_client',
+            'responsible' => null,
+            'approval_date' => null,
+            'status' => 0,
+            'description' => 'Aprobación',
         ]);
 
         $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
@@ -150,7 +198,22 @@ class EmployeeController extends Controller
      */
     public function show($id)
     {
-        $employee = Employee::find($id);
+        $employee = Employee::with([
+            'positions.adminPositionType' => function ($q) {
+                $q->select('id', 'name');
+            },
+            'positions.operativePositionType' => function ($q) {
+                $q->select('id', 'name');
+            },
+            'positions.office' => function ($q) {
+                $q->select('id', 'code');
+            },
+            'positions.district' => function ($q) {
+                $q->select('id', 'code');
+            },
+            'trackings',
+            'status'
+        ])->findOrFail($id);
 
         if (!$employee) {
             return response()->json([
@@ -184,7 +247,7 @@ class EmployeeController extends Controller
 
         $validated = $request->validate([
             'full_name' => 'required|string',
-            'dpi' => 'required|string|unique:employees,dpi',
+            'dpi' => 'required|string|unique:employees,dpi,' . $employee->id,
             'birth_date' => 'nullable|date',
             'phone' => 'nullable|string',
             'email' => 'nullable|string',
@@ -200,18 +263,87 @@ class EmployeeController extends Controller
 
             'description_files' => 'nullable|string',
             'files' => 'nullable|array',
+            'new_files' => 'nullable|array',
+
+            'user_responsible_id' => 'nullable|integer|exists:users,id',
         ]);
 
-        $files = $employee->files['files'];
-        $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
-        if (!empty($files_saved)) {
-            $files = array_merge($files_saved, $files);
-        }
-        $files = [
-            'description_files' => $validated['description_files'] ?? $employee->files['description_files'],
-            "files" => $files_saved,
+
+        $currentFiles = $employee->files ?? [
+            'files' => [],
+            'description_files' => null
         ];
 
+        //--------------------------------------------
+        // 2. Procesar nuevos archivos (si llegan)
+        //--------------------------------------------
+        $files_saved = [];
+
+        if (!empty($validated['new_files'])) {
+            $files_saved = $service->process_files(
+                $validated['new_files'],
+                'employee',
+                $employee->id,
+                'employee'
+            );
+        }
+
+        //--------------------------------------------
+        // 3. Fusionar archivos existentes + nuevos
+        //--------------------------------------------
+        $mergedFiles = array_merge(
+            $currentFiles['files'] ?? [],
+            $files_saved
+        );
+
+        //--------------------------------------------
+        // 4. Actualizar status según el body recibido
+        //--------------------------------------------
+
+        // Tu body viene así:
+        // [
+        //   { uuid: "...", status: 1 },
+        //   { uuid: "...", status: 0 }
+        // ]
+
+        $incomingStatus = collect($validated['files'] ?? []) // nombre que uses en el request
+            ->pluck('status', 'uuid'); // crea: ['uuid' => status]
+
+        $updatedFiles = collect($mergedFiles)->map(function ($file) use ($incomingStatus) {
+
+            if ($incomingStatus->has($file['uuid'])) {
+                $file['status'] = $incomingStatus[$file['uuid']];
+            }
+
+            return $file;
+        })->values()->all(); // limpiamos keys
+
+        //--------------------------------------------
+        // 5. Guardar nuevamente en el modelo
+        //--------------------------------------------
+
+        $finalFiles = [
+            'description_files' => $validated['description_files'] ?? $currentFiles['description_files'],
+            'files' => $updatedFiles,
+        ];
+
+        Log::error('Files : ' . json_encode($finalFiles));
+        //--------------------------------------------
+        // 5. Actualizar empleado
+        //--------------------------------------------
+
+        if (!empty($validated['status_id'])) {
+            $status = EmployeeStatus::find($validated['status_id']);
+            if ($status->slug == 'under_review') {
+                $employee->trackings()
+                    ->where('name', 'under_review')
+                    ->update([
+                        'responsible' => $validated['user_responsible_id'],
+                        'approval_date' => now(),
+                    ]);
+
+            }
+        }
 
         $employee->update([
             'full_name' => $validated['full_name'],
@@ -220,22 +352,15 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'status_id' => $validated['status_id'],
+            'digessp_fecha_vencimiento' => $validated['digessp_fecha_vencimiento'] ?? null,
 
-            'office_id' => $validated['office_id'],
-            'district_id' => $validated['district_id'],
-            'admin_position_id' => $validated['admin_position_id'],
-            'operative_position_id' => $validated['operative_position_id'],
-
-            'salary' => $validated['salary'],
-            'bonus' => $validated['bonus'],
-
-            'files' => $files,
+            'files' => $finalFiles,
         ]);
 
         return response()->json([
             'error' => false,
             'code' => 200,
-            'data' => $employee,
+            'data' => $employee->fresh(),
             'message' => $this->updateSuccessMessage,
         ], 200);
     }

@@ -190,6 +190,11 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::put('/{id}', [UserController::class, 'update'])
                 ->name('update')
                 ->middleware('permission:users_edit');
+
+            // PUT /api/users/{id}/password → updatePassword()
+            Route::put('/{id}/change-password', [UserController::class, 'updatePassword'])
+                ->name('update-password')
+                ->middleware('permission:users_edit');
         });
 
     Route::prefix('incidents')

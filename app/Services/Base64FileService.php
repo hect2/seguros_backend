@@ -74,6 +74,7 @@ class Base64FileService
             if ($module == 'employee') {
                 $file_saved['date_emission'] = $file['date_emission'];
                 $file_saved['type'] = $file['type'];
+                $file_saved['status'] = 0;
             }
 
             $files_saved[] = $file_saved;
