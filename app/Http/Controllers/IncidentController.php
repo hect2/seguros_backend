@@ -9,6 +9,7 @@ use App\Models\Office;
 use App\Models\Type;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class IncidentController extends Controller
@@ -31,6 +32,12 @@ class IncidentController extends Controller
             ->leftJoin('criticals', 'criticals.id', '=', 'incidents.criticity_id')
             ->leftJoin('incident_statuses', 'incident_statuses.id', '=', 'incidents.status_id')
         ;
+
+        // Apply role-based filtering
+        // $user = auth()->user();
+        // if ($user && ($user->hasRole('Operador') || $user->hasRole('Supervidor'))) {
+        //     $query->where('incidents.user_reported', $user->id);
+        // }
 
         // Filtros opcionales
         if ($search = $request->query('search')) {

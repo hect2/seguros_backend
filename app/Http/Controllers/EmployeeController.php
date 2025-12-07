@@ -8,7 +8,9 @@ use App\Models\EmployeeStatus;
 use App\Models\PositionType;
 use App\Models\Tracking;
 use App\Services\Base64FileService;
+use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -29,6 +31,9 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $query = Employee::query()
+            ->whereHas('trackings', function ($query) {
+                $query->where('responsible', auth()->id());
+            })
             ->leftjoin('positions', 'positions.employee_id', '=', 'employees.id')
             ->leftjoin('employee_statuses', 'employee_statuses.id', '=', 'employees.status_id');
 
@@ -116,65 +121,69 @@ class EmployeeController extends Controller
 
             'user_id' => 'required|integer|exists:users,id',
             'user_responsible_id' => 'nullable|integer|exists:users,id',
+            // 'status_id' => 'required|integer|exists:users,id',
         ]);
 
-        $employee = Employee::create([
-            'full_name' => $validated['full_name'],
-            'dpi' => $validated['dpi'],
-            'birth_date' => $validated['birth_date'],
-            'phone' => $validated['phone'],
-            'email' => $validated['email'],
-            'status_id' => EmployeeStatus::where('slug', 'pending')->first()->id,
-        ]);
+        $employee = DB::transaction(function () use ($validated, $service) {
+            $employee = Employee::create([
+                'full_name' => $validated['full_name'],
+                'dpi' => $validated['dpi'],
+                'birth_date' => $validated['birth_date'],
+                'phone' => $validated['phone'],
+                'email' => $validated['email'],
+                'status_id' => EmployeeStatus::where('slug', 'pending')->first()->id,
+            ]);
 
-        $positions = $employee->positions()->create([
-            'office_id' => $validated['office_id'],
-            'district_id' => $validated['district_id'],
-            'initial_salary' => $validated['salary'],
-            'admin_position_type_id' => $validated['admin_position_id'],
-            'operative_position_type_id' => $validated['operative_position_id'],
-            'bonuses' => $validated['bonus'],
-            'status' => 1,
-        ]);
+            $positions = $employee->positions()->create([
+                'office_id' => $validated['office_id'],
+                'district_id' => $validated['district_id'],
+                'initial_salary' => $validated['salary'],
+                'admin_position_type_id' => $validated['admin_position_id'],
+                'operative_position_type_id' => $validated['operative_position_id'],
+                'bonuses' => $validated['bonus'],
+                'status' => 1,
+            ]);
 
-        $trackings_nuevo_client = $employee->trackings()->create([
-            'name' => 'new_client',
-            'responsible' => $validated['user_id'],
-            'approval_date' => now(),
-            'status' => 1,
-            'description' => 'Carga de nuevo cliente',
-        ]);
-        $trackings_documents_review = $employee->trackings()->create([
-            'name' => 'documents_review',
-            'responsible' => $validated['user_responsible_id'],
-            'approval_date' => null,
-            'status' => 2,
-            'description' => 'Revisión de documentos',
-        ]);
-        $trackings_validate_account = $employee->trackings()->create([
-            'name' => 'validate_account',
-            'responsible' => null,
-            'approval_date' => null,
-            'status' => 0,
-            'description' => 'Validación de cuenta',
-        ]);
-        $trackings_approve = $employee->trackings()->create([
-            'name' => 'approve_client',
-            'responsible' => null,
-            'approval_date' => null,
-            'status' => 0,
-            'description' => 'Aprobación',
-        ]);
+            $trackings_nuevo_client = $employee->trackings()->create([
+                'name' => 'new_client',
+                'responsible' => $validated['user_id'],
+                'approval_date' => now(),
+                'status' => 1,
+                'description' => 'Carga de nuevo cliente',
+            ]);
+            $trackings_documents_review = $employee->trackings()->create([
+                'name' => 'documents_review',
+                'responsible' => $validated['user_responsible_id'] != null ? $validated['user_responsible_id'] : null,
+                'approval_date' => null,
+                'status' => $validated['user_responsible_id'] != null ? 2 : 0,
+                'description' => 'Revisión de documentos',
+            ]);
+            $trackings_validate_account = $employee->trackings()->create([
+                'name' => 'validate_account',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'Validación de cuenta',
+            ]);
+            $trackings_approve = $employee->trackings()->create([
+                'name' => 'approve_client',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'Aprobación',
+            ]);
 
-        $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
-        $files = [
-            'description_files' => $validated['description_files'],
-            "files" => $files_saved,
-        ];
+            $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
+            $files = [
+                'description_files' => $validated['description_files'],
+                "files" => $files_saved,
+            ];
 
-        $employee->update([
-            'files' => $files,
-        ]);
+            $employee->update([
+                'files' => $files,
+            ]);
+            return $employee;
+        });
 
 
         if (!$employee || !$employee->exists) {
@@ -332,16 +341,66 @@ class EmployeeController extends Controller
         // 5. Actualizar empleado
         //--------------------------------------------
 
-        if (!empty($validated['status_id'])) {
+        if (!empty($validated['status_id'] && !empty($validated['user_responsible_id']))) {
+            Log::error('Entro');
             $status = EmployeeStatus::find($validated['status_id']);
+
             if ($status->slug == 'under_review') {
+                Log::error('Entro under_review');
                 $employee->trackings()
-                    ->where('name', 'under_review')
+                    ->where('name', 'documents_review')
                     ->update([
+                        'status' => 2,
                         'responsible' => $validated['user_responsible_id'],
+                        'approval_date' => null,
+                    ]);
+                Log::error('Entro under_review updated');
+
+            } else if ($status->slug == 'account_validation') {
+                $tracking_under_review = $employee->trackings()
+                    ->where('name', 'documents_review')
+                    ->update([
+                        'status' => 1,
                         'approval_date' => now(),
                     ]);
+                $tracking = $employee->trackings()
+                    ->where('name', 'validate_account')
+                    ->update([
+                        'status' => 2,
+                        'responsible' => $validated['user_responsible_id'],
+                        'approval_date' => null,
+                    ]);
 
+            } else if ($status->slug == 'approval') {
+                $tracking = $employee->trackings()
+                    ->where('name', 'approve_client')
+                    ->first();
+
+                if ($tracking && $tracking->responsible === null) {
+                    $tracking_validate_account = $employee->trackings()
+                        ->where('name', 'validate_account')
+                        ->update([
+                            'status' => 1,
+                            'approval_date' => now(),
+                        ]);
+                    $tracking->update([
+                        'status' => 2,
+                        'responsible' => $validated['user_responsible_id'],
+                        'approval_date' => null,
+                    ]);
+                }
+            }
+        }
+
+        if (!empty($validated['status_id'])) {
+            $status = EmployeeStatus::find($validated['status_id']);
+            if ($status->slug == 'active') {
+                $tracking_validate_account = $employee->trackings()
+                    ->where('name', 'approve_client')
+                    ->update([
+                        'status' => 1,
+                        'approval_date' => now(),
+                    ]);
             }
         }
 
@@ -352,7 +411,7 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'status_id' => $validated['status_id'],
-            'digessp_fecha_vencimiento' => $validated['digessp_fecha_vencimiento'] ?? null,
+            'digessp_fecha_vencimiento' => $validated['digessp_rfecha_vencimiento'] ?? null,
 
             'files' => $finalFiles,
         ]);

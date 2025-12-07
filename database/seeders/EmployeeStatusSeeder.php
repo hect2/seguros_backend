@@ -49,7 +49,16 @@ class EmployeeStatusSeeder extends Seeder
                 'slug' => 'training',
                 'description' => 'Empleado en proceso de capacitación',
             ],
-
+            [
+                'name' => 'Validación de cuenta',
+                'slug' => 'account_validation',
+                'description' => 'El empleado está pendiente de validación de cuenta.',
+            ],
+            [
+                'name'        => 'Aprobación',
+                'slug'        => 'approval',
+                'description' => 'El empleado está pendiente de aprobación.',
+            ],
         ];
 
         foreach ($status as $key => $value) {

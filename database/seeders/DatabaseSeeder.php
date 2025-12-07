@@ -35,13 +35,13 @@ class DatabaseSeeder extends Seeder
 
             // Tests
             UserSeeder::class,
-            BusinessSeeder::class,
-            DistrictSeeder::class,
-            OfficeSeeder::class,
-            IncidentSeeder::class,
-            EmployeeSeeder::class,
-            PositionSeeder::class,
-            TrackingSeeder::class,
+            // BusinessSeeder::class,
+            // DistrictSeeder::class,
+            // OfficeSeeder::class,
+            // IncidentSeeder::class,
+            // EmployeeSeeder::class,
+            // PositionSeeder::class,
+            // TrackingSeeder::class,
         ]);
     }
 }
