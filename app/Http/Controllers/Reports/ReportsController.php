@@ -188,12 +188,12 @@ class ReportsController extends Controller
         $reserveStatusId = 6;   // 'Reserva'
 
         // 1) Encontrar el top client (Business) por cantidad de empleados (JOIN sobre la cadena)
-        $topClient = Business::select('business.*', DB::raw('COUNT(employees.id) as employees_count'))
+        $topClient = Business::select('business.id', 'business.name', DB::raw('COUNT(employees.id) as employees_count'))
             ->join('districts', 'districts.business_id', '=', 'business.id')
             ->join('offices', 'offices.district_id', '=', 'districts.id')
             ->join('positions', 'positions.office_id', '=', 'offices.id')
             ->join('employees', 'employees.id', '=', 'positions.employee_id')
-            ->groupBy('business.id')
+            ->groupBy('business.id','business.name')
             ->orderByDesc('employees_count')
             ->first();
 

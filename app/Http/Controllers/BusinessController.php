@@ -70,7 +70,7 @@ class BusinessController extends Controller
 
     public function show($id)
     {
-        $business = Business::with('distrito')->findOrFail($id);
+        $business = Business::with('distrito')->find($id);
 
         if (!$business) {
             return response()->json([
@@ -89,7 +89,7 @@ class BusinessController extends Controller
 
     public function update(Request $request, $id)
     {
-        $business = Business::findOrFail($id);
+        $business = Business::find($id);
 
         if (!$business) {
             return response()->json([
