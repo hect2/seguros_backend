@@ -6,6 +6,7 @@ use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MessageIncidentController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OfficeController;
 use App\Http\Controllers\ReportIncidentController;
 use App\Http\Controllers\Reports\ClientTotalsController;
@@ -195,6 +196,18 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::put('/{id}/change-password', [UserController::class, 'updatePassword'])
                 ->name('update-password')
                 ->middleware('permission:users_edit');
+        });
+
+    Route::prefix('notifications')
+        ->name('users.notifications.')
+        ->middleware('auth:sanctum') // o el middleware que uses
+        ->group(function () {
+
+            Route::get('/', [NotificationController::class, 'index']);
+
+            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+
+            Route::post('/read-all', [NotificationController::class, 'markAll']);
         });
 
     Route::prefix('incidents')
