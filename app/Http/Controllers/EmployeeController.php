@@ -37,6 +37,21 @@ class EmployeeController extends Controller
             ->leftjoin('positions', 'positions.employee_id', '=', 'employees.id')
             ->leftjoin('employee_statuses', 'employee_statuses.id', '=', 'employees.status_id');
 
+        $user = auth()->user();
+
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+
+                // Si el usuario tiene distritos asignados en un array
+                if (!empty($user->district) && is_array($user->district)) {
+                    $q->orWhereIn('positions.district_id', $user->district);
+                }
+
+                // Si deseas agregar también las incidencias del usuario:
+                // $q->orWhere('incidents.user_reported', $user->id);
+            });
+        }
+
         // Filtros opcionales
         if ($search = $request->query('search')) {
             $query->where(function ($q) use ($search) {

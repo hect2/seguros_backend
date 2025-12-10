@@ -14,6 +14,21 @@ class IncidentReportService
 
         $query = Incident::query();
 
+        $user = auth()->user();
+        if ($user) {
+            $query->where(function ($q) use ($user) {
+
+                // Incidentes que el usuario reportó directamente
+                // $q->where('incidents.user_reported', $user->id);
+
+                // Si el usuario tiene distritos asignados
+                if (!empty($user->district) && is_array($user->district)) {
+                    $q->orWhereIn('incidents.district_id', $user->district);
+                }
+
+            });
+        }
+
         if ($start)
             $query->whereDate('created_at', '>=', $start);
         if ($end)
@@ -52,9 +67,9 @@ class IncidentReportService
 
         // Stadistica de Incidentes resueltos por fecha
         $by_critical = $query->clone()
-                ->selectRaw('criticity_id, COUNT(*) as total')
-                ->groupBy('criticity_id')
-                ->get();
+            ->selectRaw('criticity_id, COUNT(*) as total')
+            ->groupBy('criticity_id')
+            ->get();
 
         $incidents_criticals = $by_critical->map(fn($incident) => [
             'critical' => $incident->criticidad?->name,
