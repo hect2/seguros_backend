@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\District;
 use App\Models\EmployeeStatus;
+use App\Models\Office;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -10,10 +12,11 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    public function login(Request $request) {
+    public function login(Request $request)
+    {
         $user = User::where('email', $request->email)->first();
 
-        if (! $user || ! Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             return response()->json(['error' => 'Credenciales inválidas'], 401);
         }
 
@@ -43,7 +46,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function user(Request $request) {
+    public function user(Request $request)
+    {
         $user = Auth::user();
         $data_user = [
             'id' => $user->id,
@@ -51,6 +55,8 @@ class AuthController extends Controller
             'email' => $user->email,
             'dpi' => $user->dpi,
             'phone' => $user->phone,
+            'district' => $user->district,
+            'office' => $user->office,
             'role_names' => $user->role_names,
             'permission_names' => $user->permission_names
         ];
@@ -61,7 +67,8 @@ class AuthController extends Controller
         ]);
     }
 
-    public function logout(Request $request) {
+    public function logout(Request $request)
+    {
         $request->user()->currentAccessToken()->delete();
         return response()->json(['message' => 'Sesión cerrada']);
     }
