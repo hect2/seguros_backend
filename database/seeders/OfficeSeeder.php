@@ -21,7 +21,7 @@ class OfficeSeeder extends Seeder
             // DINOC
             [
                 'district_id' => District::where("code", "DINOC")->first()->id,
-                'user_id' => 3,
+                'user_id' => null,
                 'code' => 'OF001',
                 'name' => 'OTR COBÁN',
                 'direction' => 'Cobán, Alta Verapaz',
@@ -56,7 +56,7 @@ class OfficeSeeder extends Seeder
             // DICE
             [
                 'district_id' => District::where("code", "DICE")->first()->id,
-                'user_id' => 4,     // Reemplaza con el ID real del usuario Alangumer Gonzalo Eduardo Ángel López
+                'user_id' => null,     // Reemplaza con el ID real del usuario Alangumer Gonzalo Eduardo Ángel López
                 'code' => 'OF004',
                 'name' => 'AREA NORTE',
                 'direction' => 'Zona 1, Ciudad de Guatemala',

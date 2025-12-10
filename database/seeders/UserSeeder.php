@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\District;
 use App\Models\EmployeeStatus;
+use App\Models\Office;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -36,18 +37,24 @@ class UserSeeder extends Seeder
             $user->assignRole($roleName);
 
             if ($roleName == 'Administrador') {
+                $district = District::where("code", "DINOR")->first();
                 $user->update([
-                    'district' => [District::where("code", "DINOR")->first()->id,],
+                    'district' => [$district->id,],
+                    'office' => [Office::where("district_id", $district->id)->first()->id,],
                 ]);
             }
             if ($roleName == 'Supervidor') {
+                $district = District::where("code", "DICE")->first();
                 $user->update([
-                    'district' => [District::where("code", "DICE")->first()->id,],
+                    'district' => [$district->id,],
+                    'office' => [Office::where("district_id", $district->id)->first()->id,],
                 ]);
             }
             if ($roleName == 'Operador') {
+                $district = District::where("code", "DISO_SUR")->first();
                 $user->update([
-                    'district' => [District::where("code", "DISO")->first()->id,],
+                    'district' => [$district->id,],
+                    'office' => [Office::where("district_id", $district->id)->first()->id,],
                 ]);
             }
 

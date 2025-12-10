@@ -91,6 +91,7 @@ class UserController extends Controller
                 'dpi' => 'required|string|max:20|unique:users,dpi',
                 'phone' => 'nullable|string|max:20',
                 'district' => 'nullable|array', // debe venir como array
+                'office' => 'nullable|array', // debe venir como array
                 'observations' => 'nullable|string',
                 'role_id' => 'required|exists:roles,id',
             ],
@@ -104,6 +105,7 @@ class UserController extends Controller
                 'dpi.required' => 'El DPI es obligatorio.',
                 'dpi.unique' => 'El DPI ya está registrado.',
                 'district.array' => 'El distrito debe ser un arreglo válido.',
+                'office.array' => 'La oficina debe ser un arreglo válido.',
                 'role_id.required' => 'Debe seleccionar un rol.',
                 'role_id.exists' => 'El rol seleccionado no existe.',
             ]
@@ -120,6 +122,9 @@ class UserController extends Controller
             'phone' => $validated['phone'] ?? null,
             'district' => isset($validated['district'])
                 ? $validated['district']
+                : null,
+            'office' => isset($validated['office'])
+                ? $validated['office']
                 : null,
             'observations' => $validated['observations'] ?? null,
             'last_changed_password' => now(),
