@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title', 255);
             $table->foreignId('type_id')->constrained('types');
-            $table->foreignId('office_id')->constrained('offices')->cascadeOnDelete();
+            $table->foreignId('district_id')->constrained('districts')->cascadeOnDelete();
             $table->foreignId('criticity_id')->constrained('criticals');
             $table->text('description')->nullable();
 
@@ -29,7 +29,7 @@ return new class extends Migration
             $table->foreignId('user_assigned')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->index(['office_id', 'user_reported', 'user_assigned']);
+            $table->index(['district_id', 'user_reported', 'user_assigned']);
         });
     }
 

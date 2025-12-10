@@ -18,7 +18,7 @@ class Incident extends Model
     protected $fillable = [
         'title',
         'type_id',
-        'office_id',
+        'district_id',
         'criticity_id',
         'description',
         'files',
@@ -47,9 +47,9 @@ class Incident extends Model
      */
 
     // 🔹 Relaciones
-    public function oficina()
+    public function district()
     {
-        return $this->belongsTo(Office::class, 'office_id', 'id');
+        return $this->belongsTo(District::class, 'district_id', 'id');
     }
 
     public function userReported()

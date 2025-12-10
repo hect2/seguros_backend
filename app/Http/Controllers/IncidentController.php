@@ -7,6 +7,8 @@ use App\Models\Incident;
 use App\Models\IncidentStatus;
 use App\Models\Office;
 use App\Models\Type;
+use App\Models\User;
+use App\Notifications\NewIncidentNotification;
 use App\Services\Base64FileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,7 +28,7 @@ class IncidentController extends Controller
     public function index(Request $request)
     {
         $query = Incident::query()
-            ->join('offices', 'offices.id', '=', 'incidents.office_id')
+            ->join('districts', 'districts.id', '=', 'incidents.district_id')
             ->leftJoin('users', 'users.id', '=', 'incidents.user_assigned')
             ->leftJoin('types', 'types.id', '=', 'incidents.type_id')
             ->leftJoin('criticals', 'criticals.id', '=', 'incidents.criticity_id')
@@ -34,11 +36,20 @@ class IncidentController extends Controller
         ;
 
         // Apply role-based filtering
-        // $user = auth()->user();
-        // if ($user && ($user->hasRole('Operador') || $user->hasRole('Supervidor'))) {
-        //     $query->where('incidents.user_reported', $user->id);
-        // }
+        $user = auth()->user();
+        if ($user) {
+            $query->where(function ($q) use ($user) {
 
+                // Incidentes que el usuario reportó directamente
+                // $q->where('incidents.user_reported', $user->id);
+
+                // Si el usuario tiene distritos asignados
+                if (!empty($user->district) && is_array($user->district)) {
+                    $q->orWhereIn('incidents.district_id', $user->district);
+                }
+
+            });
+        }
         // Filtros opcionales
         if ($search = $request->query('search')) {
             $query->where('users.name', 'like', "%{$search}%");
@@ -48,8 +59,8 @@ class IncidentController extends Controller
             $query->where('incidents.type_id', $type);
         }
 
-        if ($office_id = $request->query('office_id')) {
-            $query->where('incidents.office_id', $office_id);
+        if ($district_id = $request->query('district_id')) {
+            $query->where('incidents.district_id', $district_id);
         }
 
         if ($criticidad = $request->query('criticidad')) {
@@ -71,7 +82,7 @@ class IncidentController extends Controller
         $sortDir = $request->query('', 'asc');
 
         $incidents = $query->orderBy($sortBy, $sortDir)
-            ->select('incidents.id', 'incidents.created_at as date', 'types.name as type', 'incidents.description as description', 'offices.code as office', 'users.name as user_reported', 'criticals.name as criticity', 'criticals.slug as criticity_slug', 'incident_statuses.name as status', 'incident_statuses.slug as status_slug')
+            ->select('incidents.id', 'incidents.created_at as date', 'types.name as type', 'incidents.description as description', 'districts.code as district', 'users.name as user_reported', 'criticals.name as criticity', 'criticals.slug as criticity_slug', 'incident_statuses.name as status', 'incident_statuses.slug as status_slug')
             ->paginate($perPage);
 
         return response()->json($incidents, 200);
@@ -88,7 +99,7 @@ class IncidentController extends Controller
 
             // Llaves foráneas
             'type_id' => 'required|integer|exists:types,id',
-            'office_id' => 'required|integer|exists:offices,id',
+            'district_id' => 'required|integer|exists:districts,id',
             'criticity_id' => 'required|integer|exists:criticals,id',
 
             // Usuarios
@@ -106,7 +117,7 @@ class IncidentController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'type_id' => $validated['type_id'],
-            'office_id' => $validated['office_id'],
+            'district_id' => $validated['district_id'],
             'criticity_id' => $validated['criticity_id'],
             'status_id' => $validated['status'],
             'user_reported' => $validated['user_reported'],
@@ -125,6 +136,12 @@ class IncidentController extends Controller
                 'code' => 500,
                 'message' => $this->storeErrorMessage,
             ], 500);
+        }
+
+        // Obtener usuarios del distrito
+        $districtUsers = User::whereJsonContains('district', $incident->district_id)->get();
+        foreach ($districtUsers as $user) {
+            $user->notify(new NewIncidentNotification($incident));
         }
 
         return response()->json([
@@ -146,7 +163,7 @@ class IncidentController extends Controller
             'id' => $incident->id,
             'title' => $incident->title,
             'type' => $incident->type?->name,
-            'office' => $incident->oficina?->code,
+            'district' => $incident->oficina?->code,
             'criticity' => $incident->criticidad?->name,
             'criticity_slug' => $incident->criticidad?->slug,
             'description' => $incident->description,
@@ -197,7 +214,7 @@ class IncidentController extends Controller
 
             // Llaves foráneas
             'type_id' => 'required|integer|exists:types,id',
-            'office_id' => 'required|integer|exists:offices,id',
+            'district_id' => 'required|integer|exists:districts,id',
             'criticity_id' => 'required|integer|exists:criticals,id',
 
             // Usuarios
@@ -221,7 +238,7 @@ class IncidentController extends Controller
             'title' => $validated['title'],
             'description' => $validated['description'],
             'type_id' => $validated['type_id'],
-            'office_id' => $validated['office_id'],
+            'district_id' => $validated['district_id'],
             'criticity_id' => $validated['criticity_id'],
             'status_id' => $validated['status'],
             'user_assigned' => $validated['user_assigned'],
