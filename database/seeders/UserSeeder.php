@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
                 [
                     'name' => $roleName,
                     'password' => Hash::make('password'), // 👈 puedes cambiarlo
-                    'status' =>  EmployeeStatus::inRandomOrder()->first()->id,
+                    'status' => EmployeeStatus::inRandomOrder()->first()->id,
                     'dpi' => fake()->numerify('#############'),
                     'phone' => fake()->phoneNumber(),
                     'district' => json_encode([]),
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
                 $district = District::where("code", "DINOR")->first();
                 $user->update([
                     'district' => [$district->id,],
-                    'office' => [Office::where("district_id", $district->id)->first()->id,],
+                    'office' => [Office::where("district_id", $district->id)->where("code", 'OF008')->first()->id,],
                 ]);
             }
             if ($roleName == 'Supervidor') {
@@ -59,6 +59,80 @@ class UserSeeder extends Seeder
             }
 
             echo "✅ Usuario {$user->email} con rol {$roleName} creado.\n";
+        }
+
+        $roles_admin = Role::where('name', 'Administrador')->first();
+        $user = User::firstOrCreate(
+            ['email' => strtolower(str_replace(' ', '_', $roles_admin->name)) . rand(2, 20) . 'DINOR' . '@example.com'],
+            [
+                'name' => $roles_admin->name,
+                'password' => Hash::make('password'), // 👈 puedes cambiarlo
+                'status' => EmployeeStatus::inRandomOrder()->first()->id,
+                'dpi' => fake()->numerify('#############'),
+                'phone' => fake()->phoneNumber(),
+                'district' => json_encode([]),
+                'office' => json_encode([]),
+                'observations' => fake()->sentence(),
+                'last_changed_password' => now(),
+            ]
+        );
+        $user->assignRole($roles_admin->name);
+
+        if ($roles_admin->name == 'Administrador') {
+            $district = District::where("code", "DINOR")->first();
+            $user->update([
+                'district' => [$district->id,],
+                'office' => [Office::where("district_id", $district->id)->where("code", 'OF009')->first()->id,],
+            ]);
+        }
+
+
+        $user = User::firstOrCreate(
+            ['email' => strtolower(str_replace(' ', '_', $roles_admin->name)) . rand(2, 20) . 'DICE' . '@example.com'],
+            [
+                'name' => $roles_admin->name,
+                'password' => Hash::make('password'), // 👈 puedes cambiarlo
+                'status' => EmployeeStatus::inRandomOrder()->first()->id,
+                'dpi' => fake()->numerify('#############'),
+                'phone' => fake()->phoneNumber(),
+                'district' => json_encode([]),
+                'office' => json_encode([]),
+                'observations' => fake()->sentence(),
+                'last_changed_password' => now(),
+            ]
+        );
+        $user->assignRole($roles_admin->name);
+
+        if ($roles_admin->name == 'Administrador') {
+            $district = District::where("code", "DICE")->first();
+            $user->update([
+                'district' => [$district->id,],
+                'office' => [Office::where("district_id", $district->id)->where("code", 'OF004')->first()->id,],
+            ]);
+        }
+
+        $user = User::firstOrCreate(
+            ['email' => strtolower(str_replace(' ', '_', $roles_admin->name)) . rand(2, 20) . 'DISO_SUR' . '@example.com'],
+            [
+                'name' => $roles_admin->name,
+                'password' => Hash::make('password'), // 👈 puedes cambiarlo
+                'status' => EmployeeStatus::inRandomOrder()->first()->id,
+                'dpi' => fake()->numerify('#############'),
+                'phone' => fake()->phoneNumber(),
+                'district' => json_encode([]),
+                'office' => json_encode([]),
+                'observations' => fake()->sentence(),
+                'last_changed_password' => now(),
+            ]
+        );
+        $user->assignRole($roles_admin->name);
+
+        if ($roles_admin->name == 'Administrador') {
+            $district = District::where("code", "DISO_SUR")->first();
+            $user->update([
+                'district' => [$district->id,],
+                'office' => [Office::where("district_id", $district->id)->where("code", 'OF012')->first()->id,],
+            ]);
         }
     }
 }

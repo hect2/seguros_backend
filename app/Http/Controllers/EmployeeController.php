@@ -31,25 +31,29 @@ class EmployeeController extends Controller
     public function index(Request $request)
     {
         $query = Employee::query()
-            ->whereHas('trackings', function ($query) {
-                $query->where('responsible', auth()->id());
-            })
+            // ->whereHas('trackings', function ($query) {
+            //     $query->where('responsible', auth()->id());
+            // })
             ->leftjoin('positions', 'positions.employee_id', '=', 'employees.id')
             ->leftjoin('employee_statuses', 'employee_statuses.id', '=', 'employees.status_id');
 
         $user = auth()->user();
 
         if ($user) {
-            $query->where(function ($q) use ($user) {
+            // $query->where(function ($q) use ($user) {
 
-                // Si el usuario tiene distritos asignados en un array
-                if (!empty($user->district) && is_array($user->district)) {
-                    $q->orWhereIn('positions.district_id', $user->district);
-                }
+            // Si el usuario tiene distritos asignados en un array
+            if (!empty($user->district) && is_array($user->district)) {
+                $query->where('positions.district_id', $user->district[0]);
+            }
 
-                // Si deseas agregar también las incidencias del usuario:
-                // $q->orWhere('incidents.user_reported', $user->id);
-            });
+            // Si deseas agregar también las incidencias del usuario:
+            // $q->orWhere('incidents.user_reported', $user->id);
+            if (!empty($user->office) && is_array($user->office)) {
+                $query->where('positions.office_id', $user->office[0]);
+            }
+            Log::error('user: ' . json_encode($user->toArray()));
+            // });
         }
 
         // Filtros opcionales
