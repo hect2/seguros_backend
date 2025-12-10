@@ -29,6 +29,7 @@ class User extends Authenticatable
         'dpi',
         'phone',
         'district',
+        'office',
         'observations',
         'last_login',
         'last_changed_password',
