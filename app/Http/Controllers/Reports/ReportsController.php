@@ -11,6 +11,7 @@ use App\Models\Office;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReportsController extends Controller
 {
@@ -65,6 +66,8 @@ class ReportsController extends Controller
         $trainingStatusId = EmployeeStatus::where('slug', 'training')->first()->id;       // e.g., 'Capacitacion'
         $activeStatusId = EmployeeStatus::where('slug', 'active')->first()->id;         // e.g., 'Activo' for 'Total Asegurados'
 
+        $today = Carbon::today()->toDateString();
+
         $query = Office::query();
 
         if ($request->has('office_id')) {
@@ -74,25 +77,29 @@ class ReportsController extends Controller
         }
 
         $offices = $query->withCount([
-            'positions as temporary_guards_count' => function ($q) use ($temporalGuardsStatusId) {
-                $q->whereHas('employees', function ($e) use ($temporalGuardsStatusId) {
+            'positions as temporary_guards_count' => function ($q) use ($temporalGuardsStatusId, $today) {
+                $q->whereHas('employees', function ($e) use ($temporalGuardsStatusId, $today) {
                     $e->where('status_id', $temporalGuardsStatusId);
                 });
+                $q->where('created_at', '>=', $today);
             },
-            'positions as suspended_count' => function ($q) use ($suspendedStatusId) {
-                $q->whereHas('employees', function ($e) use ($suspendedStatusId) {
+            'positions as suspended_count' => function ($q) use ($suspendedStatusId, $today) {
+                $q->whereHas('employees', function ($e) use ($suspendedStatusId, $today) {
                     $e->where('status_id', $suspendedStatusId);
                 });
+                $q->where('created_at', '>=', $today);
             },
-            'positions as training_count' => function ($q) use ($trainingStatusId) {
-                $q->whereHas('employees', function ($e) use ($trainingStatusId) {
+            'positions as training_count' => function ($q) use ($trainingStatusId, $today) {
+                $q->whereHas('employees', function ($e) use ($trainingStatusId, $today) {
                     $e->where('status_id', $trainingStatusId);
                 });
+                $q->where('created_at', '>=', $today);
             },
-            'positions as total_insured_count' => function ($q) use ($activeStatusId) {
-                $q->whereHas('employees', function ($e) use ($activeStatusId) {
+            'positions as total_insured_count' => function ($q) use ($activeStatusId, $today) {
+                $q->whereHas('employees', function ($e) use ($activeStatusId, $today) {
                     $e->where('status_id', $activeStatusId);
                 });
+                $q->where('created_at', '>=', $today);
             },
         ])->get();
 
@@ -122,17 +129,20 @@ class ReportsController extends Controller
             }
         }
 
-        $today = Carbon::today();
+        $today = Carbon::today()->toDateString();
 
         $offices = $query->withCount([
             // Total empleados
-            'positions as total_count',
+            'positions as total_count' => function ($q) use ($today) {
+                $q->where('created_at', '>=', $today);
+            },
 
             // Certificados vigentes
             'positions as vigentes_count' => function ($q) use ($today) {
                 $q->whereHas('employees', function ($e) use ($today) {
                     $e->where('digessp_fecha_vencimiento', '>=', $today);
                 });
+                $q->where('created_at', '>=', $today);
             },
 
             // Certificados vencidos
@@ -140,13 +150,15 @@ class ReportsController extends Controller
                 $q->whereHas('employees', function ($e) use ($today) {
                     $e->where('digessp_fecha_vencimiento', '<', $today);
                 });
+                $q->where('created_at', '>=', $today);
             },
 
             // Sin certificado
-            'positions as sin_certificado_count' => function ($q) {
-                $q->whereHas('employees', function ($e) {
+            'positions as sin_certificado_count' => function ($q) use ($today) {
+                $q->whereHas('employees', function ($e) use ($today) {
                     $e->whereNull('digessp_fecha_vencimiento');
                 });
+                $q->where('created_at', '>=', $today);
             },
         ])->get();
 
@@ -184,8 +196,10 @@ class ReportsController extends Controller
     private function getTotalsByClient(Request $request)
     {
         // Placeholder status IDs (ajusta o busca por slug si prefieres)
-        $availableStatusId = 5; // 'Disponible'
-        $reserveStatusId = 6;   // 'Reserva'
+        $availableStatusId = EmployeeStatus::where('slug', 'active')->first()->id;         // e.g., 'Activo' for 'Total Asegurados'
+        $reserveStatusId = EmployeeStatus::where('slug', 'temporary_guard')->first()->id; // e.g., 'Guadias Temporales'
+
+        $today = Carbon::today()->toDateString();
 
         // 1) Encontrar el top client (Business) por cantidad de empleados (JOIN sobre la cadena)
         $topClient = Business::select('business.id', 'business.name', DB::raw('COUNT(employees.id) as employees_count'))
@@ -193,7 +207,8 @@ class ReportsController extends Controller
             ->join('offices', 'offices.district_id', '=', 'districts.id')
             ->join('positions', 'positions.office_id', '=', 'offices.id')
             ->join('employees', 'employees.id', '=', 'positions.employee_id')
-            ->groupBy('business.id','business.name')
+            ->whereDate('employees.created_at', $today)
+            ->groupBy('business.id', 'business.name')
             ->orderByDesc('employees_count')
             ->first();
 
@@ -211,19 +226,22 @@ class ReportsController extends Controller
         $offices = $query
             ->with('district') // necesitamos saber a qué business pertenece la oficina (via district)
             ->withCount([
-                'positions as total_count',
-                'positions as available_count' => function ($q) use ($availableStatusId) {
-                    $q->whereHas('employees', function ($e) use ($availableStatusId) {
+                'positions as total_count' => function ($q) use ($today) {
+                    $q->where('created_at', '>=', $today);
+                },
+                'positions as available_count' => function ($q) use ($availableStatusId, $today) {
+                    $q->whereHas('employees', function ($e) use ($availableStatusId, $today) {
                         $e->where('status_id', $availableStatusId);
                     });
+                    $q->where('created_at', '>=', $today);
                 },
-                'positions as reserve_count' => function ($q) use ($reserveStatusId) {
-                    $q->whereHas('employees', function ($e) use ($reserveStatusId) {
+                'positions as reserve_count' => function ($q) use ($reserveStatusId, $today) {
+                    $q->whereHas('employees', function ($e) use ($reserveStatusId, $today) {
                         $e->where('status_id', $reserveStatusId);
                     });
+                    $q->where('created_at', '>=', $today);
                 },
             ])->get();
-
 
         // 4) Mapear y calcular top_client_count / others_count / total por oficina
         $offices = $offices->map(function ($office) use ($topClient) {
@@ -270,9 +288,11 @@ class ReportsController extends Controller
     public function getGlobalDistributionByRegion(Request $request)
     {
         $districts = District::where('status', 1)
-            ->withCount(['offices' => function ($query) {
-                $query->where('status', 1);
-            }])
+            ->withCount([
+                'offices' => function ($query) {
+                    $query->where('status', 1);
+                }
+            ])
             ->get();
 
         $districtsData = $districts->map(function ($district) {
@@ -292,9 +312,11 @@ class ReportsController extends Controller
 
     public function getDistributionByRegion(Request $request)
     {
-        $districts = District::with(['offices' => function ($query) {
-            $query->where('status', 1)->withCount('positions');
-        }])->get();
+        $districts = District::with([
+            'offices' => function ($query) {
+                $query->where('status', 1)->withCount('positions');
+            }
+        ])->get();
 
         $districtsData = $districts->map(function ($district) {
             $officesData = $district->offices->map(function ($office) {
