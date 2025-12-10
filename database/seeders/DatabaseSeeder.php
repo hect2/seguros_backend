@@ -34,12 +34,12 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
 
             // Tests
+            BusinessSeeder::class,
+            DistrictSeeder::class,
             UserSeeder::class,
-            // BusinessSeeder::class,
-            // DistrictSeeder::class,
-            // OfficeSeeder::class,
-            // IncidentSeeder::class,
-            // EmployeeSeeder::class,
+            OfficeSeeder::class,
+            IncidentSeeder::class,
+            EmployeeSeeder::class,
             // PositionSeeder::class,
             // TrackingSeeder::class,
         ]);

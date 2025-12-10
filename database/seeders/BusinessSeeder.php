@@ -10,7 +10,7 @@ class BusinessSeeder extends Seeder
     public function run(): void
     {
         Business::create([
-            'name' => fake()->name(),
+            'name' => 'Banrural',
             'direction' => fake()->city(),
             'phone' => fake()->phoneNumber(),
         ]);

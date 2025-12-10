@@ -3,12 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\Critical;
+use App\Models\District;
 use App\Models\Incident;
 use App\Models\IncidentStatus;
-use App\Models\Office;
 use App\Models\Type;
 use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class IncidentSeeder extends Seeder
@@ -47,7 +46,7 @@ class IncidentSeeder extends Seeder
             Incident::create([
                 'title' => "Incidente #$i",
                 'type_id' => Type::inRandomOrder()->first()->id,
-                'office_id' => Office::inRandomOrder()->first()->id,
+                'district_id' => District::inRandomOrder()->first()->id,
                 'criticity_id' => Critical::inRandomOrder()->first()->id,
                 'description' => fake()->paragraph(),
                 'files' => $files,

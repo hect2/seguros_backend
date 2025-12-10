@@ -17,20 +17,13 @@ class DistrictSeeder extends Seeder
     {
         $faker = Faker::create();
         $districts = [
-            ['code' => 'D001', 'name' => 'Central District', 'description' => 'Main administrative zone', 'status' => 1],
-            ['code' => 'D002', 'name' => 'North District', 'description' => 'Northern operations area', 'status' => 1],
-            ['code' => 'D003', 'name' => 'South District', 'description' => 'Southern zone', 'status' => 1],
+            ['code' => 'DINOC',     'name' => 'Distrito Norte Central',     'status' => 1, 'business_id' => Business::first()->id],
+            ['code' => 'DICE',      'name' => 'Distrito Central',           'status' => 1, 'business_id' => Business::first()->id],
+            ['code' => 'DINOR',     'name' => 'Distrito Noreste',           'status' => 1, 'business_id' => Business::first()->id],
+            ['code' => 'DISO',      'name' => 'Distrito Suroccidente',      'status' => 1, 'business_id' => Business::first()->id],
+            ['code' => 'DISO_SUR',  'name' => 'Distrito Sur',               'status' => 0, 'business_id' => Business::first()->id],
+            ['code' => 'DIOR',      'name' => 'Distrito Oriente',           'status' => 1, 'business_id' => Business::first()->id],
         ];
-
-        for ($i = 4; $i <= 50; $i++) {
-            $districts[] = [
-                'code' => 'D' . str_pad($i, 3, '0', STR_PAD_LEFT),
-                'name' => ucfirst($faker->unique()->city) . ' District',
-                'description' => $faker->sentence(6),
-                'status' => $faker->randomElement([0, 1]),
-                'business_id' => Business::inRandomOrder()->first()->id
-            ];
-        }
 
         foreach ($districts as $data) {
             District::firstOrCreate(['code' => $data['code']], $data);

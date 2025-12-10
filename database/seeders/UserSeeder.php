@@ -35,6 +35,22 @@ class UserSeeder extends Seeder
             // 🔹 Asignar el rol
             $user->assignRole($roleName);
 
+            if ($roleName == 'Administrador') {
+                $user->update([
+                    'district' => [District::where("code", "DINOR")->first()->id,],
+                ]);
+            }
+            if ($roleName == 'Supervidor') {
+                $user->update([
+                    'district' => [District::where("code", "DICE")->first()->id,],
+                ]);
+            }
+            if ($roleName == 'Operador') {
+                $user->update([
+                    'district' => [District::where("code", "DISO")->first()->id,],
+                ]);
+            }
+
             echo "✅ Usuario {$user->email} con rol {$roleName} creado.\n";
         }
     }
