@@ -139,7 +139,7 @@ class IncidentController extends Controller
         }
 
         // Obtener usuarios del distrito
-        $districtUsers = User::whereJsonContains('district', $incident->district_id)->get();
+        $districtUsers = User::whereJsonContains('district', (int)$incident->district_id)->get();
         foreach ($districtUsers as $user) {
             $user->notify(new NewIncidentNotification($incident));
         }
