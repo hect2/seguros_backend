@@ -202,6 +202,7 @@ class UserController extends Controller
             $user->districtIds = $districtIds ?? [];
             $user->district = $districtIds ? District::whereIn('id', $districtIds)->pluck('code') : [];
             $user->office = $officeIds ? Office::whereIn('id', $officeIds)->pluck('code') : [];
+            $user->officeIds = $officeIds ?? [];
 
             return $user;
         })->first();
@@ -227,6 +228,7 @@ class UserController extends Controller
             "district" => $user->district,
             "districtIds" => $user->districtIds,
             "office" => $user->office,
+            "officeIds" => $user->officeIds,
             "last_login" => $user->last_login,
             "observations" => $user->observations,
             "phone" => $user->phone,
@@ -290,6 +292,7 @@ class UserController extends Controller
 
                 'phone' => 'nullable|string|max:20',
                 'district' => 'nullable|array',
+                'office' => 'nullable|array',
                 'observations' => 'nullable|string',
 
                 'role_id' => [
@@ -307,6 +310,7 @@ class UserController extends Controller
                 'dpi.required' => 'El DPI es obligatorio.',
                 'dpi.unique' => 'El DPI ya está registrado.',
                 'district.array' => 'El distrito debe ser un arreglo válido.',
+                'office.array' => 'El distrito debe ser un arreglo válido.',
                 // 'role_id.required' => 'Debe seleccionar un rol.',
                 'role_id.exists' => 'El rol seleccionado no existe.',
             ]
