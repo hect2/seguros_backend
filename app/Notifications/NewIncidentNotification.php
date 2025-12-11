@@ -37,10 +37,15 @@ class NewIncidentNotification extends Notification
      */
     public function toDatabase($notifiable)
     {
+        $incident = $this->incident;
         return [
             'incident_id' => $this->incident->id,
             'title' => $this->incident->title,
             'district_id' => $this->incident->district_id,
+            'district_code' => optional($this->incident->district)->code,
+            'user_reported' => optional($this->incident->userReported)->name,
+            'criticity_slug' => optional($this->incident->criticidad)->slug,
+            'criticity_name' => optional($this->incident->criticidad)->name,
             'message' => "Se ha creado un nuevo incidente en tu distrito.",
         ];
     }
