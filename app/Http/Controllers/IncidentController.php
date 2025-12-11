@@ -139,7 +139,7 @@ class IncidentController extends Controller
         }
 
         // Obtener usuarios del distrito
-        $districtUsers = User::whereJsonContains('district', (int)$incident->district_id)->get();
+        $districtUsers = User::whereJsonContains('district', (int) $incident->district_id)->get();
         foreach ($districtUsers as $user) {
             $user->notify(new NewIncidentNotification($incident));
         }
@@ -253,9 +253,68 @@ class IncidentController extends Controller
         ], 200);
     }
 
-    public function getOffices()
+    public function getOffices(Request $request)
     {
-        $offices = Office::select('id', 'code')->get();
+        $district_id = (int) $request->input('district_id', 0);
+        $user_id = (int) $request->input('user_id', 0);
+
+        if ($district_id === 0) {
+            if ($user_id === 0) {
+                // Filtrar por distrito únicamente
+                $offices = Office::select('id', 'code')->get();
+            } else {
+                // Filtrar por la oficina del usuario autenticado
+                $user = Auth::user();
+
+                // Validación defensiva por si user->office está vacío
+                if (!$user->hasRole('Super Administrador')) {
+                    if (!isset($user->office) || !is_array($user->office) || count($user->office) === 0) {
+                        return response()->json([
+                            'error' => true,
+                            'message' => 'El usuario no tiene oficinas asignadas.',
+                        ], 400);
+                    }
+
+                    $officeId = $user->office[0];
+
+                    $offices = Office::where('id', $officeId)
+                        ->select('id', 'code')
+                        ->get();
+                } else {
+                    $offices = Office::select('id', 'code')->get();
+                }
+            }
+        } else {
+            if ($user_id === 0) {
+                // Filtrar por distrito únicamente
+                $offices = Office::where('district_id', $district_id)
+                    ->select('id', 'code')
+                    ->get();
+            } else {
+                // Filtrar por la oficina del usuario autenticado
+                $user = Auth::user();
+
+                if (!$user->hasRole('Super Administrador')) {
+                    // Validación defensiva por si user->office está vacío
+                    if (!isset($user->office) || !is_array($user->office) || count($user->office) === 0) {
+                        return response()->json([
+                            'error' => true,
+                            'message' => 'El usuario no tiene oficinas asignadas.',
+                        ], 400);
+                    }
+
+                    $officeId = $user->office[0];
+
+                    $offices = Office::where('id', $officeId)
+                        ->select('id', 'code')
+                        ->get();
+                } else {
+                    $offices = Office::select('id', 'code')->get();
+                }
+            }
+        }
+
+
         return response()->json([
             'error' => false,
             'code' => 200,

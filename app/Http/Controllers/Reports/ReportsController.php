@@ -10,6 +10,7 @@ use App\Models\EmployeeStatus;
 use App\Models\Office;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -70,6 +71,14 @@ class ReportsController extends Controller
 
         $query = Office::query();
 
+        $user = Auth::user();
+        if (!$user->hasRole('Super Administrador')) {
+            if (isset($user->office) || is_array($user->office) || count($user->office) > 0) {
+                $officeId = $user->office[0];
+                $query = Office::query()->where('id', $officeId);
+            }
+        }
+
         if ($request->has('office_id')) {
             if ($request->input('office_id') != null) {
                 $query->where('id', $request->input('office_id'));
@@ -122,6 +131,14 @@ class ReportsController extends Controller
     private function getCertificationDigessp(Request $request)
     {
         $query = Office::query();
+
+        $user = Auth::user();
+        if (!$user->hasRole('Super Administrador')) {
+            if (isset($user->office) || is_array($user->office) || count($user->office) > 0) {
+                $officeId = $user->office[0];
+                $query = Office::query()->where('id', $officeId);
+            }
+        }
 
         if ($request->has('office_id')) {
             if ($request->input('office_id') != null) {
@@ -214,6 +231,14 @@ class ReportsController extends Controller
 
         // 2) Preparar query de oficinas (puedes filtrar por office_id)
         $query = Office::query();
+
+        $user = Auth::user();
+        if (!$user->hasRole('Super Administrador')) {
+            if (isset($user->office) || is_array($user->office) || count($user->office) > 0) {
+                $officeId = $user->office[0];
+                $query = Office::query()->where('id', $officeId);
+            }
+        }
 
         if ($request->has('office_id')) {
             if ($request->input('office_id') != null) {

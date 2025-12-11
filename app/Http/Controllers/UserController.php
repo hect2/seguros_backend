@@ -7,6 +7,7 @@ use App\Models\Office;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
@@ -373,9 +374,37 @@ class UserController extends Controller
         ], 200);
     }
 
-    public function getDistricts()
+    public function getDistricts(Request $request)
     {
-        $districts = District::select('id', 'code')->get();
+
+        $user_id = (int) $request->input('user_id', 0);
+        if ($user_id === 0) {
+            // Filtrar por distrito únicamente
+            $districts = District::select('id', 'code')->get();
+        } else {
+            // Filtrar por la oficina del usuario autenticado
+            $user = Auth::user();
+
+            // Validación defensiva por si user->office está vacío
+            if (!$user->hasRole('Super Administrador')) {
+                if (!isset($user->district) || !is_array($user->district) || count($user->district) === 0) {
+                    return response()->json([
+                        'error' => true,
+                        'message' => 'El usuario no tiene distritos asignadas.',
+                    ], 400);
+                }
+
+                $districtId = $user->district[0];
+
+                $districts = District::where('id', $districtId)
+                    ->select('id', 'code')
+                    ->get();
+
+            } else {
+                $districts = District::select('id', 'code')->get();
+            }
+        }
+
         return response()->json([
             'error' => false,
             'code' => 200,
