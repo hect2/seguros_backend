@@ -4,13 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Imports\EmployeesImport;
 use App\Models\Employee;
+use App\Models\EmployeeBackup;
 use App\Models\EmployeeStatus;
 use App\Models\PositionType;
-use App\Models\Tracking;
 use App\Services\Base64FileService;
 use DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -435,6 +434,15 @@ class EmployeeController extends Controller
             'files' => $finalFiles,
         ]);
 
+        $positions = $employee->positions()->update([
+            'office_id' => $validated['office_id'],
+            'district_id' => $validated['district_id'],
+            'initial_salary' => $validated['salary'],
+            'admin_position_type_id' => $validated['admin_position_id'],
+            'operative_position_type_id' => $validated['operative_position_id'],
+            'bonuses' => $validated['bonus'],
+        ]);
+
         return response()->json([
             'error' => false,
             'code' => 200,
@@ -485,6 +493,25 @@ class EmployeeController extends Controller
             'error' => false,
             'code' => 200,
             'data' => $position_types,
+        ], 200);
+    }
+
+    public function getHistory($id)
+    {
+        $employee = EmployeeBackup::where('employee_id', $id)->get();
+
+        if (!$employee) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $employee,
         ], 200);
     }
 }

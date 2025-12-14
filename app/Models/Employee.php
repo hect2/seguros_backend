@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Console\Commands\BackupEmployees;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -42,5 +43,10 @@ class Employee extends Model
     public function status()
     {
         return $this->belongsTo(EmployeeStatus::class);
+    }
+
+    public function history()
+    {
+        return $this->belongsTo(BackupEmployees::class, 'employee_id', 'id');
     }
 }

@@ -293,6 +293,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::post('/import', [EmployeeController::class, 'import'])
                 ->name('import')
                 ->middleware('permission:employees_create_or_import');
+
+            // GET /api/employees/history/{id} → show()
+            Route::get('/history/{id}', [EmployeeController::class, 'getHistory'])
+                ->name('getHistory');
         });
 
 
