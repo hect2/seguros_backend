@@ -20,9 +20,4 @@ class Business extends Model
         'phone',
         'status',
     ];
-
-    public function distrito()
-    {
-        return $this->hasMany(District::class);
-    }
 }

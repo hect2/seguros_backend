@@ -59,6 +59,16 @@ class EmployeeStatusSeeder extends Seeder
                 'slug'        => 'approval',
                 'description' => 'El empleado está pendiente de aprobación.',
             ],
+            [
+                'name'        => 'Asegurado',
+                'slug'        => 'insured',
+                'description' => 'El empleado está asegurado.',
+            ],
+            [
+                'name'        => 'Acreditado',
+                'slug'        => 'accredited',
+                'description' => 'El empleado está acreditado.',
+            ]
         ];
 
         foreach ($status as $key => $value) {

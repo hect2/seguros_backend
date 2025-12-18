@@ -19,7 +19,7 @@ class District extends Model
         'name',
         'description',
         'status',
-        'business_id',
+        // 'business_id',
     ];
 
     public function offices()

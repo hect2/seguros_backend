@@ -389,9 +389,10 @@ class UserController extends Controller
             if (!$user->hasRole('Super Administrador')) {
                 if (!isset($user->district) || !is_array($user->district) || count($user->district) === 0) {
                     return response()->json([
-                        'error' => true,
-                        'message' => 'El usuario no tiene distritos asignadas.',
-                    ], 400);
+                        'error' => false,
+                        'code' => 200,
+                        'data' => District::select('id', 'code')->get(),
+                    ], 200);
                 }
 
                 $districtId = $user->district[0];

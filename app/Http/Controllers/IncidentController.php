@@ -270,9 +270,10 @@ class IncidentController extends Controller
                 if (!$user->hasRole('Super Administrador')) {
                     if (!isset($user->office) || !is_array($user->office) || count($user->office) === 0) {
                         return response()->json([
-                            'error' => true,
-                            'message' => 'El usuario no tiene oficinas asignadas.',
-                        ], 400);
+                            'error' => false,
+                            'code' => 200,
+                            'data' => Office::select('id', 'code')->get(),
+                        ], 200);
                     }
 
                     $officeId = $user->office[0];
@@ -298,9 +299,10 @@ class IncidentController extends Controller
                     // Validación defensiva por si user->office está vacío
                     if (!isset($user->office) || !is_array($user->office) || count($user->office) === 0) {
                         return response()->json([
-                            'error' => true,
-                            'message' => 'El usuario no tiene oficinas asignadas.',
-                        ], 400);
+                            'error' => false,
+                            'code' => 200,
+                            'data' => Office::select('id', 'code')->get(),
+                        ], 200);
                     }
 
                     $officeId = $user->office[0];

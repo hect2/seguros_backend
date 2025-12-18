@@ -57,7 +57,7 @@ class DistrictController extends Controller
             'name' => 'required|string',
             'description' => 'nullable|string',
             'status' => 'integer|in:0,1',
-            'business_id' => 'integer|exists:business,id',
+            // 'business_id' => 'integer|exists:business,id',
         ]);
 
         $district = District::create($validated);
@@ -121,7 +121,7 @@ class DistrictController extends Controller
             'name' => 'sometimes|string',
             'description' => 'nullable|string',
             'status' => 'sometimes|integer|in:0,1',
-            'business_id' => 'integer|exists:business,id',
+            // 'business_id' => 'integer|exists:business,id',
         ]);
 
         $district->update($validated);

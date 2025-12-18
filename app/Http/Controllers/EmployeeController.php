@@ -7,6 +7,8 @@ use App\Models\Employee;
 use App\Models\EmployeeBackup;
 use App\Models\EmployeeStatus;
 use App\Models\PositionType;
+use App\Models\User;
+use App\Notifications\NewUserResponsibleNotification;
 use App\Services\Base64FileService;
 use DB;
 use Illuminate\Http\Request;
@@ -120,7 +122,7 @@ class EmployeeController extends Controller
             'birth_date' => 'nullable|date',
             'phone' => 'nullable|string',
             'email' => 'nullable|string',
-            // 'status_id' => 'required|integer|exists:employee_statuses,id',
+            'digessp_code' => 'nullable|string',
             'digessp_fecha_vencimiento' => 'nullable|date',
 
             'office_id' => 'required|integer|exists:offices,id',
@@ -139,7 +141,15 @@ class EmployeeController extends Controller
 
             'user_id' => 'required|integer|exists:users,id',
             'user_responsible_id' => 'nullable|integer|exists:users,id',
-            // 'status_id' => 'required|integer|exists:users,id',
+
+            'employee_code' => 'required|string',
+            'admission_date' => 'required|date',
+            'departure_date' => 'nullable|date',
+            'client_id' => 'required|integer|exists:business,id',
+            'turn' => 'nullable|string',
+            'reason_for_leaving' => 'nullable|string',
+            'suspension_date' => 'nullable|date',
+            'life_insurance_code' => 'nullable|string',
         ]);
 
         $employee = DB::transaction(function () use ($validated, $service) {
@@ -150,6 +160,9 @@ class EmployeeController extends Controller
                 'phone' => $validated['phone'],
                 'email' => $validated['email'],
                 'status_id' => EmployeeStatus::where('slug', 'pending')->first()->id,
+
+                'digessp_code' => $validated['digessp_code'],
+                'digessp_fecha_vencimiento' => $validated['digessp_fecha_vencimiento'],
             ]);
 
             $positions = $employee->positions()->create([
@@ -160,6 +173,15 @@ class EmployeeController extends Controller
                 'operative_position_type_id' => $validated['operative_position_id'],
                 'bonuses' => $validated['bonus'],
                 'status' => 1,
+
+                'employee_code' => $validated['employee_code'],
+                'admission_date' => $validated['admission_date'],
+                'departure_date' => $validated['departure_date'],
+                'client_id' => $validated['client_id'],
+                'turn' => $validated['turn'],
+                'reason_for_leaving' => $validated['reason_for_leaving'],
+                'suspension_date' => $validated['suspension_date'],
+                'life_insurance_code' => $validated['life_insurance_code'],
             ]);
 
             $trackings_nuevo_client = $employee->trackings()->create([
@@ -190,6 +212,11 @@ class EmployeeController extends Controller
                 'status' => 0,
                 'description' => 'Aprobación',
             ]);
+
+            if ($validated['user_responsible_id'] != null) {
+                $user_responsible = User::find($validated['user_responsible_id']);
+                $user_responsible->notify(new NewUserResponsibleNotification($employee));
+            }
 
             $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
             $files = [
@@ -239,7 +266,10 @@ class EmployeeController extends Controller
                 $q->select('id', 'code');
             },
             'trackings',
-            'status'
+            'status',
+            'positions.client' => function ($q) {
+                $q->select('id', 'name');
+            }
         ])->findOrFail($id);
 
         if (!$employee) {
@@ -249,6 +279,16 @@ class EmployeeController extends Controller
                 'message' => $this->notFoundMessage,
             ], 404);
         }
+
+        $admissionDate = new \DateTime($employee->admission_date);
+        $today = new \DateTime();
+        if ($employee->departure_date) {
+            $departureDate = new \DateTime($employee->departure_date);
+            $antiquity = $admissionDate->diff($departureDate);
+        } else {
+            $antiquity = $admissionDate->diff($today);
+        }
+        $employee->antiquity = $antiquity->format('%y years, %m months, %d days');
 
         return response()->json([
             'error' => false,
@@ -279,6 +319,8 @@ class EmployeeController extends Controller
             'phone' => 'nullable|string',
             'email' => 'nullable|string',
             'status_id' => 'required|integer|exists:employee_statuses,id',
+            'digessp_code' => 'nullable|string',
+            'digessp_fecha_vencimiento' => 'nullable|date',
 
             'office_id' => 'required|integer|exists:offices,id',
             'district_id' => 'required|integer|exists:districts,id',
@@ -293,6 +335,15 @@ class EmployeeController extends Controller
             'new_files' => 'nullable|array',
 
             'user_responsible_id' => 'nullable|integer|exists:users,id',
+
+            'employee_code' => 'required|string',
+            'admission_date' => 'required|date',
+            'departure_date' => 'nullable|date',
+            'client_id' => 'required|integer|exists:business,id',
+            'turn' => 'nullable|string',
+            'reason_for_leaving' => 'nullable|string',
+            'suspension_date' => 'nullable|date',
+            'life_insurance_code' => 'nullable|string',
         ]);
 
 
@@ -374,6 +425,9 @@ class EmployeeController extends Controller
                     ]);
                 Log::error('Entro under_review updated');
 
+                $user_responsible = User::find($validated['user_responsible_id']);
+                $user_responsible->notify(new NewUserResponsibleNotification($employee));
+
             } else if ($status->slug == 'account_validation') {
                 $tracking_under_review = $employee->trackings()
                     ->where('name', 'documents_review')
@@ -388,6 +442,9 @@ class EmployeeController extends Controller
                         'responsible' => $validated['user_responsible_id'],
                         'approval_date' => null,
                     ]);
+
+                $user_responsible = User::find($validated['user_responsible_id']);
+                $user_responsible->notify(new NewUserResponsibleNotification($employee));
 
             } else if ($status->slug == 'approval') {
                 $tracking = $employee->trackings()
@@ -406,6 +463,9 @@ class EmployeeController extends Controller
                         'responsible' => $validated['user_responsible_id'],
                         'approval_date' => null,
                     ]);
+
+                    $user_responsible = User::find($validated['user_responsible_id']);
+                    $user_responsible->notify(new NewUserResponsibleNotification($employee));
                 }
             }
         }
@@ -429,7 +489,8 @@ class EmployeeController extends Controller
             'phone' => $validated['phone'],
             'email' => $validated['email'],
             'status_id' => $validated['status_id'],
-            'digessp_fecha_vencimiento' => $validated['digessp_rfecha_vencimiento'] ?? null,
+            'digessp_code' => $validated['digessp_code'],
+            'digessp_fecha_vencimiento' => $validated['digessp_fecha_vencimiento'] ?? null,
 
             'files' => $finalFiles,
         ]);
@@ -441,6 +502,15 @@ class EmployeeController extends Controller
             'admin_position_type_id' => $validated['admin_position_id'],
             'operative_position_type_id' => $validated['operative_position_id'],
             'bonuses' => $validated['bonus'],
+
+            'employee_code' => $validated['employee_code'],
+            'admission_date' => $validated['admission_date'],
+            'departure_date' => $validated['departure_date'],
+            'client_id' => $validated['client_id'],
+            'turn' => $validated['turn'],
+            'reason_for_leaving' => $validated['reason_for_leaving'],
+            'suspension_date' => $validated['suspension_date'],
+            'life_insurance_code' => $validated['life_insurance_code'],
         ]);
 
         return response()->json([

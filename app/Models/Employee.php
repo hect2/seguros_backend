@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Console\Commands\BackupEmployees;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +21,7 @@ class Employee extends Model
         'email',
         'files',
         'status_id',
+        'digessp_code',
         'digessp_fecha_vencimiento',
     ];
 
@@ -47,6 +47,11 @@ class Employee extends Model
 
     public function history()
     {
-        return $this->belongsTo(BackupEmployees::class, 'employee_id', 'id');
+        return $this->belongsTo(EmployeeBackup::class, 'employee_id', 'id');
+    }
+
+    public function lastHistory()
+    {
+        return $this->hasOne(EmployeeBackup::class)->latestOfMany();
     }
 }

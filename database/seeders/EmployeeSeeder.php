@@ -59,6 +59,7 @@ class EmployeeSeeder extends Seeder
             'email' => fake()->unique()->safeEmail(),
             'files' => null,
             'status_id' => $statuses->random()->id,
+            'digessp_code' => fake()->optional()->numerify('DIGESSP-######'),
             'digessp_fecha_vencimiento' => fake()->optional()->date(),
         ]);
 
@@ -72,6 +73,14 @@ class EmployeeSeeder extends Seeder
             'initial_salary' => fake()->numberBetween(3000, 5000),
             'bonuses' => fake()->numberBetween(0, 500),
             'status' => 1,
+            'employee_code' => fake()->unique()->numerify('EMP-####'),
+            'admission_date' => fake()->date(),
+            'departure_date' => fake()->optional(0.5)->date(),
+            'client_id' => \App\Models\Business::all()->random()->id,
+            'turn' => fake()->randomElement(['day', 'night']),
+            'reason_for_leaving' => fake()->optional()->sentence(),
+            'suspension_date' => fake()->optional()->date(),
+            'life_insurance_code' => fake()->optional()->numerify('LI-######'),
         ]);
 
         // Archivos simulados

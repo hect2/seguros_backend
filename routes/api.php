@@ -17,6 +17,8 @@ use App\Http\Controllers\Reports\PNCReportController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FileController;
+use App\Http\Controllers\EmployeeStatusController;
+use App\Http\Controllers\PositionTypeController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -87,6 +89,14 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/counts/business/ → getCount()
             Route::get('/business', [BusinessController::class, 'getCount'])
                 ->name('business.all');
+
+            // GET /api/counts/positions-types/ → getCount()
+            Route::get('/positions-types', [PositionTypeController::class, 'getCount'])
+                ->name('positionstypes.all');
+
+            // GET /api/counts/status-employees/ → getCount()
+            Route::get('/status-employees', [EmployeeStatusController::class, 'getCount'])
+                ->name('statusemployees.all');
         });
 
 
@@ -362,7 +372,36 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
                 ->name('getDistributionByRegion');
         });
 
+    Route::prefix('employee-status')
+        ->middleware('permission:employees_view')
+        ->group(function () {
+
+            // GET /api/employee-status → index()
+            Route::get('/', [EmployeeStatusController::class, 'index']);
+
+            // POST /api/employee-status → store()
+            Route::post('/', [EmployeeStatusController::class, 'store'])->middleware('permission:employee_status_create');
+
+            // PUT /api/employee-status/{id} → update()
+            Route::put('/{employeeStatus}', [EmployeeStatusController::class, 'update'])->middleware('permission:employee_status_edit');
+        });
+
+    Route::prefix('position-types')
+        ->middleware('permission:employees_view')
+        ->group(function () {
+
+            // GET /api/position-types → index()
+            Route::get('/', [PositionTypeController::class, 'index']);
+
+            // POST /api/position-types → store()
+            Route::post('/', [PositionTypeController::class, 'store'])->middleware('permission:employee_positions_create');
+
+            // PUT /api/position-types/{id} → update()
+            Route::put('/{positionType}', [PositionTypeController::class, 'update'])->middleware('permission:employee_positions_edit');
+        });
+
     // GET /api/image/{filename} → show()
     Route::get('/file', [FileController::class, 'show']);
 
 });
+
