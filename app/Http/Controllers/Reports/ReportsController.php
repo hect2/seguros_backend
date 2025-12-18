@@ -121,7 +121,7 @@ class ReportsController extends Controller
             // if (!$yesterdayBackup) {
             //     continue;
             // }
-            $yesterdayStatusId = $employee->lastHistory['data']['status_id'];
+            $yesterdayStatusId = $employee->lastHistory['data']['status_id'] ?? 0;
             $todayStatusId = $employee->status_id;
             Log::error("EmployeeID : " . $employee->id . " yesterdayStatusId: " . $yesterdayStatusId . " todayStatusId: " . $todayStatusId);
 

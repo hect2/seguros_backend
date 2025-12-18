@@ -23,7 +23,7 @@ class UserSeeder extends Seeder
                 [
                     'name' => $roleName,
                     'password' => Hash::make('password'), // 👈 puedes cambiarlo
-                    'status' => EmployeeStatus::inRandomOrder()->first()->id,
+                    'status' => EmployeeStatus::where('slug', 'active')->first()->id,
                     'dpi' => fake()->numerify('#############'),
                     'phone' => fake()->phoneNumber(),
                     'district' => json_encode([]),
