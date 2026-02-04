@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BusinessController;
 use App\Http\Controllers\DistrictController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\IncidentCatalogController;
 use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\MessageIncidentController;
 use App\Http\Controllers\NotificationController;
@@ -97,6 +98,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/counts/status-employees/ → getCount()
             Route::get('/status-employees', [EmployeeStatusController::class, 'getCount'])
                 ->name('statusemployees.all');
+
+            // GET /api/counts/incidents/ → getCount()
+            Route::get('/incidents', [IncidentCatalogController::class, 'getCount'])
+                ->name('incidents.all');
         });
 
 
@@ -273,6 +278,20 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
 
                     // DELETE /api/incidents/messages/{$id} → destroy()
                     Route::delete('/{id}', [MessageIncidentController::class, 'destroy']);
+                });
+
+            Route::prefix('catalog')
+                ->name('catalog.')
+                ->group(function () {
+
+                    // GET /api/incidents/catalog → index()
+                    Route::get('', [IncidentCatalogController::class, 'index']);
+
+                    // POST /api/incidents/catalog/ → store()
+                    Route::post('', [IncidentCatalogController::class, 'store']);
+
+                    // PUT /api/incidents/catalog/{$id} → update()
+                    Route::put('{id}', [IncidentCatalogController::class, 'update']);
                 });
         });
 
