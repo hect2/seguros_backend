@@ -94,6 +94,7 @@ class EmployeeController extends Controller
                     return [
                         'office_code' => $position->office->code,
                         'district_code' => $position->office->district->code,
+                        'office_name' => $position->office->name,
                         'admin_position' => $position->adminPositionType?->name ?? null,
                         'operative_position' => $position->operativePositionType?->name ?? null,
                     ];
