@@ -78,4 +78,14 @@ class IncidentCatalogController extends Controller
             'total' => $total,
         ], 200);
     }
+
+    public function getIncidentCatalogs()
+    {
+        $catalogs = IncidentCatalog::select('id', 'name', 'slug')->get();
+        return response()->json([
+            'error' => false,
+            'code' => 200,
+            'data' => $catalogs,
+        ], 200);
+    }
 }
