@@ -16,6 +16,7 @@ use App\Http\Controllers\Reports\GeneralReportController;
 use App\Http\Controllers\Reports\OfficeSummaryController;
 use App\Http\Controllers\Reports\PNCReportController;
 use App\Http\Controllers\Reports\ReportsController;
+use App\Http\Controllers\ServicePositionController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\EmployeeStatusController;
@@ -77,6 +78,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             Route::get('/users', [UserController::class, 'getUsers'])
                 ->name('getUsers');
 
+            // GET /api/list/service-positions → getServicePositions()
+            Route::get('/service-positions/{id}', [ServicePositionController::class, 'getServicePositions'])
+                ->name('getServicePositions');
+
         });
 
     Route::prefix('counts')
@@ -106,6 +111,10 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/counts/incidents/ → getCount()
             Route::get('/incidents', [IncidentCatalogController::class, 'getCount'])
                 ->name('incidents.all');
+
+            // GET /api/counts/service-positions/ → getCount()
+            Route::get('/service-positions', [ServicePositionController::class, 'getCount'])
+                ->name('servicepositions.all');
         });
 
 
@@ -330,6 +339,8 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
             // GET /api/employees/history/{id} → show()
             Route::get('/history/{id}', [EmployeeController::class, 'getHistory'])
                 ->name('getHistory');
+
+            Route::post('/deactivate/{id}', [EmployeeController::class, 'deactivate']);
         });
 
 
@@ -426,5 +437,18 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
     // GET /api/image/{filename} → show()
     Route::get('/file', [FileController::class, 'show']);
 
+    Route::prefix('service-positions')
+        ->name('servicespositions.')
+        ->group(function () {
+
+            // GET /api/service-positions → index()
+            Route::get('', [ServicePositionController::class, 'index']);
+
+            // POST /api/service-positions → store()
+            Route::post('', [ServicePositionController::class, 'store']);
+
+            // PUT /api/service-positions/{id} → update()
+            Route::put('{id}', [ServicePositionController::class, 'update']);
+        });
 });
 

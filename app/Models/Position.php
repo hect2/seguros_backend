@@ -27,6 +27,7 @@ class Position extends Model
         'admission_date',
         'departure_date',
         'client_id',
+        'service_position_id',
         'position_id',
         'employee_status_id',
         'turn',
@@ -63,6 +64,11 @@ class Position extends Model
     public function client()
     {
         return $this->belongsTo(Business::class, 'client_id', 'id');
+    }
+
+    public function servicePosition()
+    {
+        return $this->belongsTo(ServicePosition::class);
     }
 }
 

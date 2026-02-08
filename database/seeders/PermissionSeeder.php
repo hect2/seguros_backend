@@ -62,11 +62,26 @@ class PermissionSeeder extends Seeder
             'employee_positions_view',
             'employee_positions_create',
             'employee_positions_edit',
+
+            // Service Positions
+            'service_positions_view',
+            'service_positions_create',
+            'service_positions_edit',
+
+            // =========================
+            // FLUJO ALTAS / BAJAS
+            // =========================
+            'requests_create',
+            'requests_view',
+            'requests_review_th',
+            'requests_review_iao',
+            'requests_review_lic',
+            'requests_validate',
+            'requests_authorize',
         ];
 
         foreach ($permissions as $permission) {
             Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'web',]);
-
         }
     }
 }

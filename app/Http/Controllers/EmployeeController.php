@@ -12,6 +12,7 @@ use App\Notifications\NewUserResponsibleNotification;
 use App\Services\Base64FileService;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Maatwebsite\Excel\Facades\Excel;
 
@@ -147,6 +148,7 @@ class EmployeeController extends Controller
             'admission_date' => 'required|date',
             'departure_date' => 'nullable|date',
             'client_id' => 'required|integer|exists:business,id',
+            'service_position_id' => 'required|integer|exists:service_positions,id',
             'turn' => 'nullable|string',
             'reason_for_leaving' => 'nullable|string',
             'suspension_date' => 'nullable|date',
@@ -179,6 +181,7 @@ class EmployeeController extends Controller
                 'admission_date' => $validated['admission_date'],
                 'departure_date' => $validated['departure_date'],
                 'client_id' => $validated['client_id'],
+                'service_position_id' => $validated['service_position_id'],
                 'turn' => $validated['turn'],
                 'reason_for_leaving' => $validated['reason_for_leaving'],
                 'suspension_date' => $validated['suspension_date'],
@@ -190,34 +193,55 @@ class EmployeeController extends Controller
                 'responsible' => $validated['user_id'],
                 'approval_date' => now(),
                 'status' => 1,
-                'description' => 'Carga de nuevo cliente',
+                'description' => 'Director de Dependencia – registra la solicitud',
             ]);
-            $trackings_documents_review = $employee->trackings()->create([
-                'name' => 'documents_review',
-                'responsible' => $validated['user_responsible_id'] != null ? $validated['user_responsible_id'] : null,
+
+            $trackings_documents_review_th = $employee->trackings()->create([
+                'name' => 'documents_review_th',
+                'responsible' => null,
                 'approval_date' => null,
-                'status' => $validated['user_responsible_id'] != null ? 2 : 0,
-                'description' => 'Revisión de documentos',
+                'status' => 2,
+                'description' => 'Talento Humano – Revisión de documentos',
             ]);
+
+            $trackings_documents_review_iao = $employee->trackings()->create([
+                'name' => 'documents_review_iao',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'IAO – Revisión de documentos',
+            ]);
+
+            $trackings_documents_review_lic = $employee->trackings()->create([
+                'name' => 'documents_review_lic',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'Licenciada Ana Lucía – Revisión de documentos',
+            ]);
+
             $trackings_validate_account = $employee->trackings()->create([
                 'name' => 'validate_account',
                 'responsible' => null,
                 'approval_date' => null,
                 'status' => 0,
-                'description' => 'Validación de cuenta',
+                'description' => 'CFE Validación - Validación de cuenta',
             ]);
+
             $trackings_approve = $employee->trackings()->create([
                 'name' => 'approve_client',
                 'responsible' => null,
                 'approval_date' => null,
                 'status' => 0,
-                'description' => 'Aprobación',
+                'description' => 'SG Autorización - Aprobación',
             ]);
 
-            if ($validated['user_responsible_id'] != null) {
-                $user_responsible = User::find($validated['user_responsible_id']);
-                $user_responsible->notify(new NewUserResponsibleNotification($employee));
-            }
+            $this->notifyRole('requests_review_th', $employee);
+
+            // if ($validated['user_responsible_id'] != null) {
+            //     $user_responsible = User::find($validated['user_responsible_id']);
+            //     $user_responsible->notify(new NewUserResponsibleNotification($employee));
+            // }
 
             $files_saved = $service->process_files($validated['files'], 'employee', $employee->id, 'employee');
             $files = [
@@ -341,6 +365,7 @@ class EmployeeController extends Controller
             'admission_date' => 'required|date',
             'departure_date' => 'nullable|date',
             'client_id' => 'required|integer|exists:business,id',
+            'service_position_id' => 'required|integer|exists:service_positions,id',
             'turn' => 'nullable|string',
             'reason_for_leaving' => 'nullable|string',
             'suspension_date' => 'nullable|date',
@@ -387,15 +412,23 @@ class EmployeeController extends Controller
 
         $incomingStatus = collect($validated['files'] ?? []) // nombre que uses en el request
             ->pluck('status', 'uuid'); // crea: ['uuid' => status]
-
+        Log::error('incomingStatus: ' . json_encode($incomingStatus));
         $updatedFiles = collect($mergedFiles)->map(function ($file) use ($incomingStatus) {
+            Log::error('FILE: ' . json_encode($file));
 
-            if ($incomingStatus->has($file['uuid'])) {
-                $file['status'] = $incomingStatus[$file['uuid']];
+            if (
+                isset($file['uuid']) &&
+                is_string($file['uuid']) &&
+                $incomingStatus->has($file['uuid'])
+            ) {
+                $file['status'] = $incomingStatus->get($file['uuid']);
+            } else {
+                Log::error('UUID INVALIDO: ' . json_encode($file));
             }
 
             return $file;
-        })->values()->all(); // limpiamos keys
+        })->values()->all();
+
 
         //--------------------------------------------
         // 5. Guardar nuevamente en el modelo
@@ -411,28 +444,57 @@ class EmployeeController extends Controller
         // 5. Actualizar empleado
         //--------------------------------------------
 
-        if (!empty($validated['status_id'] && !empty($validated['user_responsible_id']))) {
+        if (!empty($validated['status_id'])) {
             Log::error('Entro');
             $status = EmployeeStatus::find($validated['status_id']);
 
-            if ($status->slug == 'under_review') {
-                Log::error('Entro under_review');
+            if ($status->slug == 'under_review_iao') {
+                Log::error('Entro under_review_iao');
+                $tracking_under_review = $employee->trackings()
+                    ->where('name', 'documents_review_th')
+                    ->update([
+                        'responsible' => Auth::user()->id,
+                        'status' => 1,
+                        'approval_date' => now(),
+                    ]);
                 $employee->trackings()
-                    ->where('name', 'documents_review')
+                    ->where('name', 'documents_review_iao')
                     ->update([
                         'status' => 2,
-                        'responsible' => $validated['user_responsible_id'],
                         'approval_date' => null,
                     ]);
                 Log::error('Entro under_review updated');
+                $this->notifyRole('requests_review_iao', $employee);
 
-                $user_responsible = User::find($validated['user_responsible_id']);
-                $user_responsible->notify(new NewUserResponsibleNotification($employee));
+                // $user_responsible = User::find($validated['user_responsible_id']);
+                // $user_responsible->notify(new NewUserResponsibleNotification($employee));
+
+            } else if ($status->slug == 'under_review_lic') {
+                Log::error('Entro under_review_lic');
+                $tracking_under_review = $employee->trackings()
+                    ->where('name', 'documents_review_iao')
+                    ->update([
+                        'responsible' => Auth::user()->id,
+                        'status' => 1,
+                        'approval_date' => now(),
+                    ]);
+                $employee->trackings()
+                    ->where('name', 'account_validation')
+                    ->update([
+                        'status' => 2,
+                        'approval_date' => null,
+                    ]);
+                Log::error('Entro under_review updated');
+                $this->notifyRole('requests_review_lic', $employee);
+
+                // $user_responsible = User::find($validated['user_responsible_id']);
+                // $user_responsible->notify(new NewUserResponsibleNotification($employee));
 
             } else if ($status->slug == 'account_validation') {
                 $tracking_under_review = $employee->trackings()
-                    ->where('name', 'documents_review')
+                    ->where('name', 'documents_review_lic')
                     ->update([
+                        'responsible' => Auth::user()->id,
                         'status' => 1,
                         'approval_date' => now(),
                     ]);
@@ -440,34 +502,32 @@ class EmployeeController extends Controller
                     ->where('name', 'validate_account')
                     ->update([
                         'status' => 2,
-                        'responsible' => $validated['user_responsible_id'],
+                        'responsible' => Auth::user()->id,
                         'approval_date' => null,
                     ]);
 
-                $user_responsible = User::find($validated['user_responsible_id']);
-                $user_responsible->notify(new NewUserResponsibleNotification($employee));
+                $this->notifyRole('requests_validate', $employee);
+                // $user_responsible = User::find($validated['user_responsible_id']);
+                // $user_responsible->notify(new NewUserResponsibleNotification($employee));
 
             } else if ($status->slug == 'approval') {
+                $tracking_validate_account = $employee->trackings()
+                    ->where('name', 'validate_account')
+                    ->update([
+                        'responsible' => Auth::user()->id,
+                        'status' => 1,
+                        'approval_date' => now(),
+                    ]);
                 $tracking = $employee->trackings()
-                    ->where('name', 'approve_client')
-                    ->first();
-
-                if ($tracking && $tracking->responsible === null) {
-                    $tracking_validate_account = $employee->trackings()
-                        ->where('name', 'validate_account')
-                        ->update([
-                            'status' => 1,
-                            'approval_date' => now(),
-                        ]);
-                    $tracking->update([
+                    ->where('name', 'approval')
+                    ->update([
                         'status' => 2,
-                        'responsible' => $validated['user_responsible_id'],
                         'approval_date' => null,
                     ]);
 
-                    $user_responsible = User::find($validated['user_responsible_id']);
-                    $user_responsible->notify(new NewUserResponsibleNotification($employee));
-                }
+                $this->notifyRole('requests_authorize', $employee);
+                // $user_responsible = User::find($validated['user_responsible_id']);
+                // $user_responsible->notify(new NewUserResponsibleNotification($employee));
             }
         }
 
@@ -477,6 +537,7 @@ class EmployeeController extends Controller
                 $tracking_validate_account = $employee->trackings()
                     ->where('name', 'approve_client')
                     ->update([
+                        'responsible' => Auth::user()->id,
                         'status' => 1,
                         'approval_date' => now(),
                     ]);
@@ -508,6 +569,7 @@ class EmployeeController extends Controller
             'admission_date' => $validated['admission_date'],
             'departure_date' => $validated['departure_date'],
             'client_id' => $validated['client_id'],
+            'service_position_id' => $validated['service_position_id'],
             'turn' => $validated['turn'],
             'reason_for_leaving' => $validated['reason_for_leaving'],
             'suspension_date' => $validated['suspension_date'],
@@ -585,4 +647,184 @@ class EmployeeController extends Controller
             'data' => $employee,
         ], 200);
     }
+
+    private function notifyRole(string $permissionSlug, Employee $employee, $baja = false)
+    {
+        $users = User::permission($permissionSlug)->get();
+
+        $mensaje_baja = "";
+        if ($baja) {
+            $mensaje_baja = ' para baja.';
+        }
+
+        foreach ($users as $user) {
+            $user->notify(new NewUserResponsibleNotification($employee, $mensaje_baja));
+        }
+    }
+
+    public function deactivate(Request $request, $id)
+    {
+        $employee = Employee::find($id);
+
+        if (!$employee) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => $this->notFoundMessage,
+            ], 404);
+        }
+
+        $validated = $request->validate([
+            'inactive_user' => 'required|boolean',
+        ]);
+        if (!$validated['inactive_user']) {
+            return response()->json([
+                'error' => true,
+                'code' => 404,
+                'message' => 'Usuario no autorizado para la baja',
+            ], 404);
+        }
+
+        $user = Auth::user();
+        if ($user->hasPermission('requests_create')) {
+            $trackings_nuevo_client = $employee->trackings()->create([
+                'name' => 'offboarding_new_client',
+                'responsible' => Auth::user()->id,
+                'approval_date' => now(),
+                'status' => 1,
+                'description' => 'Director de Dependencia – registra el proceso de baja',
+            ]);
+
+            $trackings_documents_review_th = $employee->trackings()->create([
+                'name' => 'offboarding_documents_review_th',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 2,
+                'description' => 'Talento Humano – Revisión de baja',
+            ]);
+
+            $trackings_documents_review_iao = $employee->trackings()->create([
+                'name' => 'offboarding_documents_review_iao',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'IAO – Revisión de baja',
+            ]);
+
+            $trackings_documents_review_lic = $employee->trackings()->create([
+                'name' => 'offboarding_documents_review_lic',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'Licenciada Ana Lucía – Revisión de baja',
+            ]);
+
+            $trackings_validate_account = $employee->trackings()->create([
+                'name' => 'offboarding_validate_account',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'CFE Validación - Validación de baja',
+            ]);
+
+            $trackings_approve = $employee->trackings()->create([
+                'name' => 'offboarding_approve_client',
+                'responsible' => null,
+                'approval_date' => null,
+                'status' => 0,
+                'description' => 'SG Autorización - Aprobación de baja',
+            ]);
+            $this->notifyRole('requests_review_th', $employee, true);
+        } else if ($user->hasPermission('requests_review_th')) {
+            Log::error('Entro offboarding_documents_review_th');
+            $tracking_under_review = $employee->trackings()
+                ->where('name', 'offboarding_documents_review_th')
+                ->update([
+                    'responsible' => $user->id,
+                    'status' => 1,
+                    'approval_date' => now(),
+                ]);
+            $employee->trackings()
+                ->where('name', 'offboarding_documents_review_iao')
+                ->update([
+                    'status' => 2,
+                    'approval_date' => null,
+                ]);
+            Log::error('Entro offboarding_documents_review_th updated');
+            $this->notifyRole('requests_review_iao', $employee, true);
+
+        } else if ($user->hasPermission('requests_review_iao')) {
+            Log::error('Entro offboarding_documents_review_iao');
+            $tracking_under_review = $employee->trackings()
+                ->where('name', 'offboarding_documents_review_iao')
+                ->update([
+                    'responsible' => $user->id,
+                    'status' => 1,
+                    'approval_date' => now(),
+                ]);
+            $employee->trackings()
+                ->where('name', 'offboarding_documents_review_lic')
+                ->update([
+                    'status' => 2,
+                    'approval_date' => null,
+                ]);
+            Log::error('Entro offboarding_documents_review_iao updated');
+            $this->notifyRole('requests_review_lic', $employee, true);
+
+        } else if ($user->hasPermission('requests_review_lic')) {
+            Log::error('Entro offboarding_documents_review_lic');
+            $tracking_under_review = $employee->trackings()
+                ->where('name', 'offboarding_documents_review_lic')
+                ->update([
+                    'responsible' => $user->id,
+                    'status' => 1,
+                    'approval_date' => now(),
+                ]);
+            $employee->trackings()
+                ->where('name', 'offboarding_validate_account')
+                ->update([
+                    'status' => 2,
+                    'approval_date' => null,
+                ]);
+            Log::error('Entro offboarding_documents_review_lic updated');
+            $this->notifyRole('requests_validate', $employee, true);
+        } else if ($user->hasPermission('requests_validate')) {
+            Log::error('Entro offboarding_validate_account');
+            $tracking_under_review = $employee->trackings()
+                ->where('name', 'offboarding_validate_account')
+                ->update([
+                    'responsible' => $user->id,
+                    'status' => 1,
+                    'approval_date' => now(),
+                ]);
+            $employee->trackings()
+                ->where('name', 'offboarding_approve_client')
+                ->update([
+                    'status' => 2,
+                    'approval_date' => null,
+                ]);
+            Log::error('Entro offboarding_validate_account updated');
+            $this->notifyRole('requests_authorize', $employee, true);
+        } else if ($user->hasPermission('requests_authorize')) {
+            Log::error('Entro offboarding_approve_client');
+            $tracking_under_review = $employee->trackings()
+                ->where('name', 'offboarding_approve_client')
+                ->update([
+                    'responsible' => $user->id,
+                    'status' => 1,
+                    'approval_date' => now(),
+                ]);
+
+            $status = EmployeeStatus::where('slug', 'inactive')->first();
+            $employee->status_id = $status->id;
+            $employee->save();
+
+            Log::error('Entro offboarding_approve_client updated');
+        }
+
+        return response()->json([
+            'message' => 'Usuario dado de baja',
+        ]);
+    }
+
 }

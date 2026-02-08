@@ -13,13 +13,15 @@ class NewUserResponsibleNotification extends Notification
     use Queueable;
 
     private $employee;
+    private $baja;
 
     /**
      * Create a new notification instance.
      */
-    public function __construct($employee)
+    public function __construct($employee, $baja = '')
     {
         $this->employee = $employee;
+        $this->baja = $baja;
     }
 
     /**
@@ -39,7 +41,7 @@ class NewUserResponsibleNotification extends Notification
     {
         return [
             'employee_id' => $this->employee->id,
-            'title' => 'Asignación de Usuario',
+            'title' => 'Asignación de Usuario' . $this->baja,
             'message' => "Se te ha asignado un usuario: "  . $this->employee->full_name,
         ];
     }
@@ -65,3 +67,4 @@ class NewUserResponsibleNotification extends Notification
         ];
     }
 }
+

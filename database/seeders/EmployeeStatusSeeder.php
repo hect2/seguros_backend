@@ -20,8 +20,18 @@ class EmployeeStatusSeeder extends Seeder
                 'description' => 'Empleado actualmente activo',
             ],
             [
-                'name' => 'En revisión',
-                'slug' => 'under_review',
+                'name' => 'En revisión - Talento Humano',
+                'slug' => 'under_review_th',
+                'description' => 'Empleado en proceso de evaluación o revisión',
+            ],
+            [
+                'name' => 'En revisión - IAO',
+                'slug' => 'under_review_iao',
+                'description' => 'Empleado en proceso de evaluación o revisión',
+            ],
+            [
+                'name' => 'En revisión - Licenciada Ana Lucía',
+                'slug' => 'under_review_lic',
                 'description' => 'Empleado en proceso de evaluación o revisión',
             ],
             [

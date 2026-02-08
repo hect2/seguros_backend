@@ -10,16 +10,32 @@ class RolePermissionSeeder extends Seeder
 {
     public function run(): void
     {
-        // Crear roles
-        $super_admin = Role::create(['name' => 'Super Administrador']);
-        $admin = Role::create(['name' => 'Administrador']);
-        $supervisor = Role::create(['name' => 'Supervidor']);
-        $operator = Role::create(['name' => 'Operador']);
+        // =========================
+        // ROLES EXISTENTES
+        // =========================
+        $super_admin = Role::firstOrCreate(['name' => 'Super Administrador']);
+        $admin = Role::firstOrCreate(['name' => 'Administrador']);
+        $supervisor = Role::firstOrCreate(['name' => 'Supervisor']);
+        $operator = Role::firstOrCreate(['name' => 'Operador']);
 
-        // 🏆 Super Admin: todos los permisos
+        // =========================
+        // ROLES DEL FLUJO AUTOMÁTICO
+        // =========================
+        $director = Role::firstOrCreate(['name' => 'Director de Dependencia']);
+        $talento_humano = Role::firstOrCreate(['name' => 'Talento Humano']);
+        $iao = Role::firstOrCreate(['name' => 'IAO']);
+        $ana_lucia = Role::firstOrCreate(['name' => 'Licenciada Ana Lucía']);
+        $cfe = Role::firstOrCreate(['name' => 'CFE Validación']);
+        $sg = Role::firstOrCreate(['name' => 'SG Autorización']);
+
+        // =========================
+        // SUPER ADMIN
+        // =========================
         $super_admin->syncPermissions(Permission::all());
 
-        // 🧭 Administrador: casi todos (sin eliminar)
+        // =========================
+        // ADMINISTRADOR
+        // =========================
         $admin->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
@@ -62,9 +78,60 @@ class RolePermissionSeeder extends Seeder
             'employee_positions_view',
             'employee_positions_create',
             'employee_positions_edit',
+
+            'service_positions_view',
+            'service_positions_create',
+            'service_positions_edit',
+
+            // flujo
+            'requests_view',
+            'requests_validate',
+            'requests_authorize',
         ]);
 
-        // 👨‍💼 Supervisor: solo revisión y visualización
+        // =========================
+        // FLUJO AUTOMÁTICO DE ALTAS / BAJAS
+        // =========================
+
+        // 1️⃣ Director de Dependencia – registra la solicitud
+        $director->syncPermissions([
+            'requests_view',
+            'requests_create',
+        ]);
+
+        // 2️⃣ Talento Humano – revisa documentación
+        $talento_humano->syncPermissions([
+            'requests_view',
+            'requests_review_th',
+        ]);
+
+        // 3️⃣ IAO – revisa documentación
+        $iao->syncPermissions([
+            'requests_view',
+            'requests_review_iao',
+        ]);
+
+        // 4️⃣ Licenciada Ana Lucía – revisa documentación
+        $ana_lucia->syncPermissions([
+            'requests_view',
+            'requests_review_lic',
+        ]);
+
+        // 5️⃣ CFE – valida documentación
+        $cfe->syncPermissions([
+            'requests_view',
+            'requests_validate',
+        ]);
+
+        // 6️⃣ SG – autoriza la solicitud
+        $sg->syncPermissions([
+            'requests_view',
+            'requests_authorize',
+        ]);
+
+        // =========================
+        // SUPERVISOR
+        // =========================
         $supervisor->syncPermissions([
             'dashboard_view_reports',
             'incidents_view',
@@ -74,9 +141,12 @@ class RolePermissionSeeder extends Seeder
             'districts_view',
             'offices_view',
             'users_view',
+            'requests_view',
         ]);
 
-        // ⚙️ Operador: tareas básicas (solo ver/crear)
+        // =========================
+        // OPERADOR
+        // =========================
         $operator->syncPermissions([
             'incidents_view',
             'incidents_create',

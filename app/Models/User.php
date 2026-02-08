@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -69,4 +70,16 @@ class User extends Authenticatable
     {
         return $this->getAllPermissions()->pluck('name'); // colección de nombres de permisos
     }
+
+    public function hasPermission(string $slug): bool
+    {
+        return $this->roles()
+            ->whereHas(
+                'permissions',
+                fn($q) =>
+                $q->where('name', $slug)
+            )
+            ->exists();
+    }
+
 }
