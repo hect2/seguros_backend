@@ -290,6 +290,9 @@ class EmployeeController extends Controller
             'positions.district' => function ($q) {
                 $q->select('id', 'code');
             },
+            'positions.servicePosition' => function ($q) {
+                $q->select('id', 'name');
+            },
             'trackings',
             'status',
             'positions.client' => function ($q) {
