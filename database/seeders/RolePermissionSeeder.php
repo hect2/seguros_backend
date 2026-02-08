@@ -95,36 +95,78 @@ class RolePermissionSeeder extends Seeder
 
         // 1️⃣ Director de Dependencia – registra la solicitud
         $director->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_create',
         ]);
 
         // 2️⃣ Talento Humano – revisa documentación
         $talento_humano->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_review_th',
         ]);
 
         // 3️⃣ IAO – revisa documentación
         $iao->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_review_iao',
         ]);
 
         // 4️⃣ Licenciada Ana Lucía – revisa documentación
         $ana_lucia->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_review_lic',
         ]);
 
         // 5️⃣ CFE – valida documentación
         $cfe->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_validate',
         ]);
 
         // 6️⃣ SG – autoriza la solicitud
         $sg->syncPermissions([
+            'dashboard_view_reports',
+            'dashboard_view_charts',
+            'employees_view',
+            'employees_create_or_import',
+            'employees_edit',
+            'employees_approve',
+            'employees_bonus',
             'requests_view',
             'requests_authorize',
         ]);
