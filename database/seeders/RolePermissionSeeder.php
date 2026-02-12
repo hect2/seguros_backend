@@ -97,6 +97,7 @@ class RolePermissionSeeder extends Seeder
         $director->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
@@ -110,6 +111,7 @@ class RolePermissionSeeder extends Seeder
         $talento_humano->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
@@ -123,6 +125,7 @@ class RolePermissionSeeder extends Seeder
         $iao->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
@@ -136,6 +139,7 @@ class RolePermissionSeeder extends Seeder
         $ana_lucia->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
@@ -149,6 +153,7 @@ class RolePermissionSeeder extends Seeder
         $cfe->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
@@ -162,6 +167,7 @@ class RolePermissionSeeder extends Seeder
         $sg->syncPermissions([
             'dashboard_view_reports',
             'dashboard_view_charts',
+            'reports_view',
             'employees_view',
             'employees_create_or_import',
             'employees_edit',
