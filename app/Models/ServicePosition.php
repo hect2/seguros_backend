@@ -13,6 +13,8 @@ class ServicePosition extends Model
         'shift',
         'service_type',
         'active',
+        'district_id',
+        'office_id',
     ];
 
     /* 🔗 Relaciones */

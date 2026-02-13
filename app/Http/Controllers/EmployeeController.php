@@ -634,7 +634,7 @@ class EmployeeController extends Controller
 
     public function getHistory($id)
     {
-        $employee = EmployeeBackup::where('employee_id', $id)->get();
+        $employee = EmployeeBackup::where('employee_id', $id)->orderByDesc('id')->limit(10)->get();
 
         if (!$employee) {
             return response()->json([

@@ -19,7 +19,7 @@ class ServicePositionController extends Controller
         }
         if ($search = $request->query('search')) {
             $query->where('name', 'like', "%{$search}%")
-            ->orWhere('location', 'like', "%{$search}%");
+                ->orWhere('location', 'like', "%{$search}%");
         }
 
         // Paginación y orden
@@ -45,6 +45,8 @@ class ServicePositionController extends Controller
             'location' => 'nullable|string',
             'shift' => 'nullable|string',
             'service_type' => 'nullable|string',
+            'district_id' => 'nullable|string',
+            'office_id' => 'nullable|string',
         ]);
 
         $validated['active'] = true;
@@ -74,6 +76,8 @@ class ServicePositionController extends Controller
             'shift' => 'nullable|string',
             'service_type' => 'nullable|string',
             'active' => 'nullable|boolean',
+            'district_id' => 'nullable|string',
+            'office_id' => 'nullable|string',
         ]);
 
         $servicePosition->update($validated);
@@ -90,12 +94,22 @@ class ServicePositionController extends Controller
         ], 200);
     }
 
-    public function getServicePositions($id)
+    public function getServicePositions(Request $request, $id)
     {
-        $servicePositions = ServicePosition::with('business:id,name')
+
+        $officeId = $request->query('office_id');
+
+        $query = ServicePosition::with('business:id,name')
             ->where('business_id', $id)
-            ->where('active', true)
-            ->select('id', 'name', 'location', 'business_id')->get();
+            ->where('active', true);
+
+        if ($officeId) {
+            $query->where('office_id', $officeId);
+        }
+
+        $servicePositions = $query
+            ->select('id', 'name', 'location', 'business_id', 'office_id')
+            ->get();
 
         return response()->json([
             'error' => false,

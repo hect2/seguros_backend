@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class Employee extends Model
 {
@@ -54,4 +55,33 @@ class Employee extends Model
     {
         return $this->hasOne(EmployeeBackup::class)->latestOfMany();
     }
+
+    public function lastHistory7Days()
+    {
+        return $this->hasOne(EmployeeBackup::class)
+            ->where('created_at', '>=', Carbon::now()->subDays(7))
+            ->latestOfMany();
+    }
+
+    public function lastHistory15Days()
+    {
+        return $this->hasOne(EmployeeBackup::class)
+            ->where('created_at', '>=', Carbon::now()->subDays(15))
+            ->latestOfMany();
+    }
+
+    public function backups()
+    {
+        return $this->hasMany(EmployeeBackup::class);
+    }
+
+    public function getLastHistoryFromDaysAgo(int $days)
+    {
+        return $this->backups()
+            ->where('created_at', '>=', now()->subDays($days))
+            ->latest()
+            ->first();
+    }
+
+
 }

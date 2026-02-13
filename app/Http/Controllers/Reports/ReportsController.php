@@ -25,7 +25,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,daily_summary',
+            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,day_summary,week_summary,fifteen_summary,all_summary',
             'format' => 'nullable|string|in:json,pdf,xlsx,csv',
             'office_id' => 'nullable|exists:offices,id',
             'start_date' => 'nullable|date',
@@ -47,8 +47,17 @@ class ReportsController extends Controller
             case 'totals_by_client':
                 $data = $this->getTotalsByClient($request);
                 break;
-            case 'daily_summary':
+            case 'day_summary':
                 $data = $this->getDailySummary($request);
+                break;
+            case 'week_summary':
+                $data = $this->getDailySummary($request, '7');
+                break;
+            case 'fifteen_summary':
+                $data = $this->getDailySummary($request, '15');
+                break;
+            case 'all_summary':
+                $data = $this->getDailySummary($request, 'all');
                 break;
         }
 
@@ -59,7 +68,7 @@ class ReportsController extends Controller
         return $this->export($data, $format, $reportType);
     }
 
-    private function getDailySummary(Request $request)
+    private function getDailySummary(Request $request, string $days = '1')
     {
         $query = Employee::query();
 
@@ -84,7 +93,7 @@ class ReportsController extends Controller
         //     ->get();
         // return response()->json($employees);
 
-        $counters = $this->countDailyStatusChanges($query);
+        $counters = $this->countDailyStatusChanges($query, $days);
 
         return [
             'daily_active_employees' => $counters['active'],
@@ -95,7 +104,7 @@ class ReportsController extends Controller
         ];
     }
 
-    private function countDailyStatusChanges($employeeQuery): array
+    private function countDailyStatusChanges($employeeQuery, string $days): array
     {
         $statusId_active = EmployeeStatus::where('slug', 'active')->first()->id;
         $statusId_inactive = EmployeeStatus::where('slug', 'inactive')->first()->id;
@@ -111,32 +120,38 @@ class ReportsController extends Controller
 
         $employees = $employeeQuery
             ->with([
-                'lastHistory'
+                'backups' => function ($q) use ($days) {
+                    if ($days !== 'all') {
+                        $q->where('created_at', '>=', now()->subDays((int) $days));
+                    }
+                    $q->latest();
+                }
             ])
             ->get();
 
         foreach ($employees as $employee) {
-            $yesterdayBackup = $employee->lastHistory;
+            // 🔥 ahora sí usamos lo que cargamos
+            $backup = $employee->backups->first();
 
-            // if (!$yesterdayBackup) {
-            //     continue;
-            // }
-            $yesterdayStatusId = $employee->lastHistory['data']['status_id'] ?? 0;
-            $todayStatusId = $employee->status_id;
-            Log::error("EmployeeID : " . $employee->id . " yesterdayStatusId: " . $yesterdayStatusId . " todayStatusId: " . $todayStatusId);
+            if (!$backup) {
+                continue;
+            }
 
-            if (
-                $yesterdayStatusId !== $todayStatusId
-            ) {
-                if ($todayStatusId === $statusId_active) {
+            $previousStatusId = $backup->data['status_id'] ?? 0;
+            $currentStatusId = $employee->status_id;
+            Log::error("EmployeeID : " . $employee->id . " yesterdayStatusId: " . $previousStatusId . " todayStatusId: " . $currentStatusId);
+
+            if ($previousStatusId !== $currentStatusId) {
+
+                if ($currentStatusId === $statusId_active) {
                     $count_active++;
-                } else if ($todayStatusId === $statusId_suspended) {
+                } elseif ($currentStatusId === $statusId_suspended) {
                     $count_suspended++;
-                } else if ($todayStatusId === $statusId_insured) {
+                } elseif ($currentStatusId === $statusId_insured) {
                     $count_insured++;
-                } else if ($todayStatusId === $statusId_accredited) {
+                } elseif ($currentStatusId === $statusId_accredited) {
                     $count_accredited++;
-                } else if ($todayStatusId === $statusId_inactive) {
+                } elseif ($currentStatusId === $statusId_inactive) {
                     $count_inactive++;
                 }
             }
