@@ -141,8 +141,22 @@ class ReportsController extends Controller
             $currentStatusId = $employee->status_id;
             Log::error("EmployeeID : " . $employee->id . " yesterdayStatusId: " . $previousStatusId . " todayStatusId: " . $currentStatusId);
 
-            if ($previousStatusId !== $currentStatusId) {
 
+            if ($days == 1) {
+                if ($previousStatusId !== $currentStatusId) {
+                    if ($currentStatusId === $statusId_active) {
+                        $count_active++;
+                    } elseif ($currentStatusId === $statusId_suspended) {
+                        $count_suspended++;
+                    } elseif ($currentStatusId === $statusId_insured) {
+                        $count_insured++;
+                    } elseif ($currentStatusId === $statusId_accredited) {
+                        $count_accredited++;
+                    } elseif ($currentStatusId === $statusId_inactive) {
+                        $count_inactive++;
+                    }
+                }
+            } else {
                 if ($currentStatusId === $statusId_active) {
                     $count_active++;
                 } elseif ($currentStatusId === $statusId_suspended) {
