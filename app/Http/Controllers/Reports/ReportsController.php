@@ -62,7 +62,7 @@ class ReportsController extends Controller
         return $this->export($data, $format, $reportType);
     }
 
-    private function getDailySummary(Request $request, string $code = '')
+    private function getDailySummary(Request $request, string $code = 'all')
     {
         $query = Employee::query();
 
@@ -92,18 +92,23 @@ class ReportsController extends Controller
 
     private function countDailyStatusChanges($employeeQuery, string $code): array
     {
-        $district_id = District::where('code', $code)->value('id');
-        Log::error('district_id: '. $district_id);
-        $employeeStatus = EmployeeStatus::select('id', 'slug')
-            // ->withCount('employees')
-            ->withCount([
-                'employees as employees_count' => function ($query) use ($district_id) {
-                    $query->whereHas('positions', function ($q) use ($district_id) {
-                        $q->where('district_id', $district_id);
-                    });
-                }
-            ])
-            ->get();
+        if ($code == 'all') {
+            $district_id = District::where('code', $code)->value('id');
+            $employeeStatus = EmployeeStatus::select('id', 'slug')
+                ->withCount('employees')
+                ->get();
+        } else {
+            $district_id = District::where('code', $code)->value('id');
+            $employeeStatus = EmployeeStatus::select('id', 'slug')
+                ->withCount([
+                    'employees as employees_count' => function ($query) use ($district_id) {
+                        $query->whereHas('positions', function ($q) use ($district_id) {
+                            $q->where('district_id', $district_id);
+                        });
+                    }
+                ])
+                ->get();
+        }
 
         Log::error('employees_count: ' . json_encode($employeeStatus->pluck('employees_count', 'slug')->toArray()));
 
