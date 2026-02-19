@@ -26,15 +26,17 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,day_summary,week_summary,fifteen_summary,all_summary',
+            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,all_summary',
             'format' => 'nullable|string|in:json,pdf,xlsx,csv',
             'office_id' => 'nullable|exists:offices,id',
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
+            'code' => 'nullable|string',
         ]);
 
         $reportType = $request->input('report_type');
         $format = $request->input('format', 'json');
+        $code = $request->input('code', '');
 
         $data = [];
 
@@ -48,17 +50,8 @@ class ReportsController extends Controller
             case 'totals_by_client':
                 $data = $this->getTotalsByClient($request);
                 break;
-            case 'day_summary':
-                $data = $this->getDailySummary($request);
-                break;
-            case 'week_summary':
-                $data = $this->getDailySummary($request, '7');
-                break;
-            case 'fifteen_summary':
-                $data = $this->getDailySummary($request, '15');
-                break;
             case 'all_summary':
-                $data = $this->getDailySummary($request, 'all');
+                $data = $this->getDailySummary($request, $code);
                 break;
         }
 
@@ -69,7 +62,7 @@ class ReportsController extends Controller
         return $this->export($data, $format, $reportType);
     }
 
-    private function getDailySummary(Request $request, string $days = '1')
+    private function getDailySummary(Request $request, string $code = '')
     {
         $query = Employee::query();
 
@@ -87,7 +80,7 @@ class ReportsController extends Controller
             }
         }
 
-        $counters = $this->countDailyStatusChanges($query, $days);
+        $counters = $this->countDailyStatusChanges($query, $code);
         $result = [];
 
         foreach ($counters as $slug => $count) {
@@ -97,10 +90,19 @@ class ReportsController extends Controller
         return $result;
     }
 
-    private function countDailyStatusChanges($employeeQuery, string $days): array
+    private function countDailyStatusChanges($employeeQuery, string $code): array
     {
+        $district_id = District::where('code', $code)->value('id');
+        Log::error('district_id: '. $district_id);
         $employeeStatus = EmployeeStatus::select('id', 'slug')
-            ->withCount('employees')
+            // ->withCount('employees')
+            ->withCount([
+                'employees as employees_count' => function ($query) use ($district_id) {
+                    $query->whereHas('positions', function ($q) use ($district_id) {
+                        $q->where('district_id', $district_id);
+                    });
+                }
+            ])
             ->get();
 
         Log::error('employees_count: ' . json_encode($employeeStatus->pluck('employees_count', 'slug')->toArray()));
@@ -315,7 +317,7 @@ class ReportsController extends Controller
         $yesterday = Carbon::yesterday()->toDateString();
 
         $response = [
-            'today' => $this->calculateTotals( ),
+            'today' => $this->calculateTotals(),
             'yesterday' => $this->calculateTotalsByDate($request, $yesterday),
         ];
 
