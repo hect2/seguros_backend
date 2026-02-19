@@ -8,6 +8,7 @@ use App\Models\District;
 use App\Models\Employee;
 use App\Models\EmployeeStatus;
 use App\Models\Office;
+use App\Models\Position;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -85,99 +86,28 @@ class ReportsController extends Controller
                 });
             }
         }
-        // $employees = $query
-        //     ->with([
-        //         'status:id',
-        //         'lastHistory'
-        //     ])
-        //     ->get();
-        // return response()->json($employees);
 
         $counters = $this->countDailyStatusChanges($query, $days);
+        $result = [];
 
-        return [
-            'daily_active_employees' => $counters['active'],
-            'daily_inactive_employees' => $counters['inactive'],
-            'daily_suspended_employees' => $counters['suspended'],
-            'daily_insured_employees' => $counters['insured'],
-            'daily_accredited_employees' => $counters['accredited'],
-        ];
+        foreach ($counters as $slug => $count) {
+            $result["daily_{$slug}_employees"] = $count;
+        }
+
+        return $result;
     }
 
     private function countDailyStatusChanges($employeeQuery, string $days): array
     {
-        $statusId_active = EmployeeStatus::where('slug', 'active')->first()->id;
-        $statusId_inactive = EmployeeStatus::where('slug', 'inactive')->first()->id;
-        $statusId_suspended = EmployeeStatus::where('slug', 'suspended')->first()->id;
-        $statusId_insured = EmployeeStatus::where('slug', 'insured')->first()->id;
-        $statusId_accredited = EmployeeStatus::where('slug', 'accredited')->first()->id;
-
-        $count_active = 0;
-        $count_inactive = 0;
-        $count_suspended = 0;
-        $count_insured = 0;
-        $count_accredited = 0;
-
-        $employees = $employeeQuery
-            ->with([
-                'backups' => function ($q) use ($days) {
-                    if ($days !== 'all') {
-                        $q->where('created_at', '>=', now()->subDays((int) $days));
-                    }
-                    $q->latest();
-                }
-            ])
+        $employeeStatus = EmployeeStatus::select('id', 'slug')
+            ->withCount('employees')
             ->get();
 
-        foreach ($employees as $employee) {
-            // 🔥 ahora sí usamos lo que cargamos
-            $backup = $employee->backups->first();
+        Log::error('employees_count: ' . json_encode($employeeStatus->pluck('employees_count', 'slug')->toArray()));
 
-            if (!$backup) {
-                continue;
-            }
-
-            $previousStatusId = $backup->data['status_id'] ?? 0;
-            $currentStatusId = $employee->status_id;
-            Log::error("EmployeeID : " . $employee->id . " yesterdayStatusId: " . $previousStatusId . " todayStatusId: " . $currentStatusId);
-
-
-            if ($days == 1) {
-                if ($previousStatusId !== $currentStatusId) {
-                    if ($currentStatusId === $statusId_active) {
-                        $count_active++;
-                    } elseif ($currentStatusId === $statusId_suspended) {
-                        $count_suspended++;
-                    } elseif ($currentStatusId === $statusId_insured) {
-                        $count_insured++;
-                    } elseif ($currentStatusId === $statusId_accredited) {
-                        $count_accredited++;
-                    } elseif ($currentStatusId === $statusId_inactive) {
-                        $count_inactive++;
-                    }
-                }
-            } else {
-                if ($currentStatusId === $statusId_active) {
-                    $count_active++;
-                } elseif ($currentStatusId === $statusId_suspended) {
-                    $count_suspended++;
-                } elseif ($currentStatusId === $statusId_insured) {
-                    $count_insured++;
-                } elseif ($currentStatusId === $statusId_accredited) {
-                    $count_accredited++;
-                } elseif ($currentStatusId === $statusId_inactive) {
-                    $count_inactive++;
-                }
-            }
-        }
-
-        return [
-            'active' => $count_active,
-            'inactive' => $count_inactive,
-            'suspended' => $count_suspended,
-            'insured' => $count_insured,
-            'accredited' => $count_accredited,
-        ];
+        return $employeeStatus
+            ->pluck('employees_count', 'slug')
+            ->toArray();
     }
 
     /**
@@ -385,7 +315,7 @@ class ReportsController extends Controller
         $yesterday = Carbon::yesterday()->toDateString();
 
         $response = [
-            'today' => $this->calculateTotalsByDate($request, $today),
+            'today' => $this->calculateTotals( ),
             'yesterday' => $this->calculateTotalsByDate($request, $yesterday),
         ];
 
@@ -520,6 +450,98 @@ class ReportsController extends Controller
             'offices' => $offices,
             'totals' => [
                 'total_top_client' => $offices->sum('top_client_count'),
+                'total_others' => $offices->sum('others_count'),
+                'total_available' => $offices->sum('available_count'),
+                'total_reserve' => $offices->sum('reserve_count'),
+                'grand_total' => $offices->sum('total'),
+            ],
+        ];
+    }
+    private function calculateTotals()
+    {
+        /*
+        |--------------------------------------------------------------------------
+        | Status IDs
+        |--------------------------------------------------------------------------
+        */
+        $availableStatusId = EmployeeStatus::where('slug', 'active')->value('id');
+        $reserveStatusId = EmployeeStatus::where('slug', 'temporary_guard')->value('id');
+
+        /*
+        |--------------------------------------------------------------------------
+        | TOP CLIENT (Distrito con más empleados)
+        |--------------------------------------------------------------------------
+        */
+        $topClient = District::select(
+            'districts.id',
+            'districts.name',
+            DB::raw('COUNT(employees.id) as employees_count')
+        )
+            ->join('offices', 'offices.district_id', '=', 'districts.id')
+            ->join('positions', 'positions.office_id', '=', 'offices.id')
+            ->join('employees', 'employees.id', '=', 'positions.employee_id')
+            ->groupBy('districts.id', 'districts.name')
+            ->orderByDesc('employees_count')
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Oficinas filtradas por usuario
+        |--------------------------------------------------------------------------
+        */
+        $query = Office::query();
+        $user = Auth::user();
+
+        if (!$user->hasRole('Super Administrador') && !empty($user->office)) {
+            $query->where('id', $user->office[0]);
+        }
+
+        $offices = $query
+            ->with('district')
+            ->withCount([
+                'positions as total_count',
+
+                'positions as available_count' => fn($q) =>
+                    $q->whereHas(
+                        'employees',
+                        fn($e) =>
+                        $e->where('status_id', $availableStatusId)
+                    ),
+
+                'positions as reserve_count' => fn($q) =>
+                    $q->whereHas(
+                        'employees',
+                        fn($e) =>
+                        $e->where('status_id', $reserveStatusId)
+                    ),
+            ])
+            ->get()
+            ->map(function ($office) use ($topClient) {
+
+                $total = (int) $office->total_count;
+
+                $belongsToTopClient = $topClient && $office->district
+                    ? $office->district->id === $topClient->id
+                    : false;
+
+                return [
+                    'office_id' => $office->id,
+                    'office_code' => $office->name,
+                    'top_client_count' => $belongsToTopClient ? $total : 0,
+                    'others_count' => !$belongsToTopClient ? $total : 0,
+                    'available_count' => (int) $office->available_count,
+                    'reserve_count' => (int) $office->reserve_count,
+                    'total' => $total,
+                ];
+            });
+
+        return [
+            'top_client_name' => $topClient?->name ?? 'N/A',
+
+            'offices' => $offices,
+
+            'totals' => [
+                'total_top_client' => (int) ($topClient->employees_count ?? 0),
                 'total_others' => $offices->sum('others_count'),
                 'total_available' => $offices->sum('available_count'),
                 'total_reserve' => $offices->sum('reserve_count'),
