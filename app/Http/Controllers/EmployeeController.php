@@ -42,20 +42,27 @@ class EmployeeController extends Controller
         $user = auth()->user();
 
         if ($user) {
-            // $query->where(function ($q) use ($user) {
+            $reviewPermissions = [
+                'requests_review_th',
+                'requests_review_iao',
+                'requests_review_lic',
+                'requests_validate',
+                'requests_authorize',
+            ];
 
-            // Si el usuario tiene distritos asignados en un array
-            if (!empty($user->district) && is_array($user->district)) {
-                $query->where('positions.district_id', $user->district[0]);
+            $canReviewAll = $user->hasAnyPermission($reviewPermissions);
+
+            if (!$canReviewAll) {
+                if (!empty($user->district) && is_array($user->district)) {
+                    $query->where('positions.district_id', $user->district[0]);
+                }
+
+                if (!empty($user->office) && is_array($user->office)) {
+                    $query->where('positions.office_id', $user->office[0]);
+                }
             }
 
-            // Si deseas agregar también las incidencias del usuario:
-            // $q->orWhere('incidents.user_reported', $user->id);
-            if (!empty($user->office) && is_array($user->office)) {
-                $query->where('positions.office_id', $user->office[0]);
-            }
             Log::error('user: ' . json_encode($user->toArray()));
-            // });
         }
 
         // Filtros opcionales
