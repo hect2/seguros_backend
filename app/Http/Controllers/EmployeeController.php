@@ -43,6 +43,7 @@ class EmployeeController extends Controller
 
         if ($user) {
             $reviewPermissions = [
+                'requests_create',
                 'requests_review_th',
                 'requests_review_iao',
                 'requests_review_lic',
