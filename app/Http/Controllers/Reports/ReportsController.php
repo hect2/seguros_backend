@@ -489,6 +489,7 @@ class ReportsController extends Controller
             ->join('employees', 'employees.id', '=', 'positions.employee_id')
             ->groupBy('districts.id', 'districts.name')
             ->orderByDesc('employees_count')
+            ->where('employees.status_id', $availableStatusId)
             ->first();
 
         /*
@@ -506,7 +507,11 @@ class ReportsController extends Controller
         $offices = $query
             ->with('district')
             ->withCount([
-                'positions as total_count',
+                'positions as total_count'
+                    => fn($q) => $q->whereHas(
+                        'employees',
+                        fn($e) => $e->where('status_id', $availableStatusId)
+                    ),
 
                 'positions as available_count' => fn($q) =>
                     $q->whereHas(
