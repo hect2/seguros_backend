@@ -19,6 +19,7 @@ class Incident extends Model
         'title',
         'type_id',
         'district_id',
+        'office_id',
         'criticity_id',
         'description',
         'files',
@@ -80,6 +81,11 @@ class Incident extends Model
     public function status()
     {
         return $this->belongsTo(IncidentStatus::class);
+    }
+
+    public function oficina()
+    {
+        return $this->belongsTo(Office::class, 'office_id', 'id');
     }
 
 }

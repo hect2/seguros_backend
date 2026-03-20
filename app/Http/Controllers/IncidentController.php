@@ -63,6 +63,10 @@ class IncidentController extends Controller
             $query->where('incidents.district_id', $district_id);
         }
 
+        if ($office_id = $request->query('office_id')) {
+            $query->where('incidents.office_id', $office_id);
+        }
+
         if ($criticidad = $request->query('criticidad')) {
             $query->whereIn('criticals.slug', $criticidad);
         }
@@ -100,6 +104,7 @@ class IncidentController extends Controller
             // Llaves foráneas
             'type_id' => 'required|integer|exists:types,id',
             'district_id' => 'required|integer|exists:districts,id',
+            'office_id' => 'nullable|integer|exists:offices,id',
             'criticity_id' => 'required|integer|exists:criticals,id',
 
             // Usuarios
@@ -118,6 +123,7 @@ class IncidentController extends Controller
             'description' => $validated['description'],
             'type_id' => $validated['type_id'],
             'district_id' => $validated['district_id'],
+            'office_id' => $validated['office_id'] ?? null,
             'criticity_id' => $validated['criticity_id'],
             'status_id' => $validated['status'],
             'user_reported' => $validated['user_reported'],
@@ -163,7 +169,8 @@ class IncidentController extends Controller
             'id' => $incident->id,
             'title' => $incident->title,
             'type' => $incident->type?->name,
-            'district' => $incident->oficina?->code,
+            'district' => $incident->district?->code,
+            'office' => $incident->oficina?->name,
             'criticity' => $incident->criticidad?->name,
             'criticity_slug' => $incident->criticidad?->slug,
             'description' => $incident->description,
@@ -215,6 +222,7 @@ class IncidentController extends Controller
             // Llaves foráneas
             'type_id' => 'required|integer|exists:types,id',
             'district_id' => 'required|integer|exists:districts,id',
+            'office_id' => 'nullable|integer|exists:offices,id',
             'criticity_id' => 'required|integer|exists:criticals,id',
 
             // Usuarios
@@ -239,6 +247,7 @@ class IncidentController extends Controller
             'description' => $validated['description'],
             'type_id' => $validated['type_id'],
             'district_id' => $validated['district_id'],
+            'office_id' => $validated['office_id'] ?? null,
             'criticity_id' => $validated['criticity_id'],
             'status_id' => $validated['status'],
             'user_assigned' => $validated['user_assigned'],

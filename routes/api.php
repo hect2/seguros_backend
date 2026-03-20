@@ -17,6 +17,7 @@ use App\Http\Controllers\Reports\OfficeSummaryController;
 use App\Http\Controllers\Reports\PNCReportController;
 use App\Http\Controllers\Reports\ReportsController;
 use App\Http\Controllers\ServicePositionController;
+use App\Http\Controllers\TypeController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\FileController;
 use App\Http\Controllers\EmployeeStatusController;
@@ -24,255 +25,265 @@ use App\Http\Controllers\PositionTypeController;
 use Illuminate\Support\Facades\Route;
 
 
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class , 'login']);
 
 Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function () {
-    Route::get('/user', [AuthController::class, 'user']);
-    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::get('/user', [AuthController::class , 'user']);
+    Route::post('/logout', [AuthController::class , 'logout']);
 
     Route::prefix('list')
         ->name('list.')
         ->group(function () {
 
             // GET /api/list/roles → getRoles()
-            Route::get('/roles', [UserController::class, 'getRoles'])
+            Route::get('/roles', [UserController::class , 'getRoles'])
                 ->name('getRoles');
 
             // GET /api/list/districts → getDistricts()
-            Route::get('/districts', [UserController::class, 'getDistricts'])
+            Route::get('/districts', [UserController::class , 'getDistricts'])
                 ->name('getDistricts');
 
             // GET /api/list/offices → getOffices()
-            Route::get('/offices', [IncidentController::class, 'getOffices'])
+            Route::get('/offices', [IncidentController::class , 'getOffices'])
                 ->name('getOffices');
 
             // GET /api/list/types → getTypes()
-            Route::get('/types', [IncidentController::class, 'getTypes'])
+            Route::get('/types', [IncidentController::class , 'getTypes'])
                 ->name('getTypes');
 
             // GET /api/list/criticals → getCriticals()
-            Route::get('/criticals', [IncidentController::class, 'getCriticals'])
+            Route::get('/criticals', [IncidentController::class , 'getCriticals'])
                 ->name('getCriticals');
 
             // GET /api/list/incident-status → getIncidentStatus()
-            Route::get('/incident-status', [IncidentController::class, 'getIncidentStatus'])
+            Route::get('/incident-status', [IncidentController::class , 'getIncidentStatus'])
                 ->name('getIncidentStatus');
 
             // GET /api/list/incident-catalog → getIncidentCatalogs()
-            Route::get('/incident-catalog', [IncidentCatalogController::class, 'getIncidentCatalogs'])
+            Route::get('/incident-catalog', [IncidentCatalogController::class , 'getIncidentCatalogs'])
                 ->name('getIncidentCatalogs');
 
+            // GET /api/list/incident-type-catalogs → getIncidentTypeCatalogs()
+            Route::get('/incident-type-catalogs', [TypeController::class , 'getTypes'])
+                ->name('getTypes');
+
             // GET /api/list/status-employees → getStatusEmployees()
-            Route::get('/status-employees', [EmployeeController::class, 'getStatusEmployees'])
+            Route::get('/status-employees', [EmployeeController::class , 'getStatusEmployees'])
                 ->name('getStatusEmployees');
 
             // GET /api/list/positiontypes → getPositionTypes()
-            Route::get('/positiontypes', [EmployeeController::class, 'getPositionTypes'])
+            Route::get('/positiontypes', [EmployeeController::class , 'getPositionTypes'])
                 ->name('getPositionTypes');
 
             // GET /api/list/business → getBusinesses()
-            Route::get('/business', [BusinessController::class, 'getBusinesses'])
+            Route::get('/business', [BusinessController::class , 'getBusinesses'])
                 ->name('getBusinesses');
 
             // GET /api/list/users → getUsers()
-            Route::get('/users', [UserController::class, 'getUsers'])
+            Route::get('/users', [UserController::class , 'getUsers'])
                 ->name('getUsers');
 
             // GET /api/list/service-positions → getServicePositions()
-            Route::get('/service-positions/{id}', [ServicePositionController::class, 'getServicePositions'])
+            Route::get('/service-positions/{id}', [ServicePositionController::class , 'getServicePositions'])
                 ->name('getServicePositions');
 
-        });
+        }
+        );
 
-    Route::prefix('counts')
-        ->name('counts.')
-        ->group(function () {
+        Route::prefix('counts')
+            ->name('counts.')
+            ->group(function () {
 
             // GET /api/counts/districts/ → getCount()
-            Route::get('/districts', [DistrictController::class, 'getCount'])
+            Route::get('/districts', [DistrictController::class , 'getCount'])
                 ->name('districts.getCount');
 
             // GET /api/counts/offices/ → getCount()
-            Route::get('/offices', [OfficeController::class, 'getCount'])
+            Route::get('/offices', [OfficeController::class , 'getCount'])
                 ->name('offices.all');
 
             // GET /api/counts/business/ → getCount()
-            Route::get('/business', [BusinessController::class, 'getCount'])
+            Route::get('/business', [BusinessController::class , 'getCount'])
                 ->name('business.all');
 
             // GET /api/counts/positions-types/ → getCount()
-            Route::get('/positions-types', [PositionTypeController::class, 'getCount'])
+            Route::get('/positions-types', [PositionTypeController::class , 'getCount'])
                 ->name('positionstypes.all');
 
             // GET /api/counts/status-employees/ → getCount()
-            Route::get('/status-employees', [EmployeeStatusController::class, 'getCount'])
+            Route::get('/status-employees', [EmployeeStatusController::class , 'getCount'])
                 ->name('statusemployees.all');
 
             // GET /api/counts/incidents/ → getCount()
-            Route::get('/incidents', [IncidentCatalogController::class, 'getCount'])
+            Route::get('/incidents', [IncidentCatalogController::class , 'getCount'])
                 ->name('incidents.all');
 
             // GET /api/counts/service-positions/ → getCount()
-            Route::get('/service-positions', [ServicePositionController::class, 'getCount'])
+            Route::get('/service-positions', [ServicePositionController::class , 'getCount'])
                 ->name('servicepositions.all');
-        });
+        }
+        );
 
 
 
-    Route::prefix('districts')
-        ->name('districts.')
-        ->middleware('permission:districts_view')
-        ->group(function () {
+        Route::prefix('districts')
+            ->name('districts.')
+            ->middleware('permission:districts_view')
+            ->group(function () {
 
             // GET /api/districts → index()
-            Route::get('/', [DistrictController::class, 'index'])
+            Route::get('/', [DistrictController::class , 'index'])
                 ->name('index');
 
             // GET /api/districts/{id} → show()
-            Route::get('/{id}', [DistrictController::class, 'show'])
+            Route::get('/{id}', [DistrictController::class , 'show'])
                 ->name('show');
 
             // POST /api/districts → store()
-            Route::post('/', [DistrictController::class, 'store'])
+            Route::post('/', [DistrictController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:districts_create_or_import');
 
             // PUT /api/districts/{id} → update()
-            Route::put('/{id}', [DistrictController::class, 'update'])
+            Route::put('/{id}', [DistrictController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:districts_edit');
 
             // DELETE /api/districts/{id} → destroy()
-            Route::delete('/{id}', [DistrictController::class, 'destroy'])
+            Route::delete('/{id}', [DistrictController::class , 'destroy'])
                 ->name('destroy')
                 ->middleware('permission:districts_delete');
 
             // POST /api/districts/import → import()
-            Route::post('/import', [DistrictController::class, 'import'])
+            Route::post('/import', [DistrictController::class , 'import'])
                 ->name('import')
                 ->middleware('permission:districts_create_or_import');
 
             // GET /api/districts/download → export()
-            Route::post('/download', [DistrictController::class, 'export'])
+            Route::post('/download', [DistrictController::class , 'export'])
                 ->name('download')
                 ->middleware('permission:districts_download');
-        });
+        }
+        );
 
-    Route::prefix('offices')
-        ->name('offices.')
-        ->middleware('permission:offices_view')
-        ->group(function () {
+        Route::prefix('offices')
+            ->name('offices.')
+            ->middleware('permission:offices_view')
+            ->group(function () {
 
             // GET /api/offices → index()
-            Route::get('/', [OfficeController::class, 'index'])
+            Route::get('/', [OfficeController::class , 'index'])
                 ->name('index');
 
             // GET /api/offices/{id} → show()
-            Route::get('/{id}', [OfficeController::class, 'show'])
+            Route::get('/{id}', [OfficeController::class , 'show'])
                 ->name('show');
 
             // POST /api/offices → store()
-            Route::post('/', [OfficeController::class, 'store'])
+            Route::post('/', [OfficeController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:offices_create_or_import');
 
             // PUT /api/offices/{id} → update()
-            Route::put('/{id}', [OfficeController::class, 'update'])
+            Route::put('/{id}', [OfficeController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:offices_edit');
 
             // DELETE /api/offices/{id} → destroy()
-            Route::delete('/{id}', [OfficeController::class, 'destroy'])
+            Route::delete('/{id}', [OfficeController::class , 'destroy'])
                 ->name('destroy')
                 ->middleware('permission:offices_delete');
 
             // POST /api/offices/import → import()
-            Route::post('/import', [OfficeController::class, 'import'])
+            Route::post('/import', [OfficeController::class , 'import'])
                 ->name('import')
                 ->middleware('permission:offices_create_or_import');
 
             // GET /api/offices/download → export()
-            Route::post('/download', [OfficeController::class, 'export'])
+            Route::post('/download', [OfficeController::class , 'export'])
                 ->name('download')
                 ->middleware('permission:offices_download');
-        });
+        }
+        );
 
-    Route::prefix('users')
-        ->name('users.')
-        ->middleware('permission:users_view')
-        ->group(function () {
+        Route::prefix('users')
+            ->name('users.')
+            ->middleware('permission:users_view')
+            ->group(function () {
 
             // GET /api/users → index()
-            Route::get('/', [UserController::class, 'index'])
+            Route::get('/', [UserController::class , 'index'])
                 ->name('index');
 
             // GET /api/users/{id} → show()
-            Route::get('/{id}', [UserController::class, 'show'])
+            Route::get('/{id}', [UserController::class , 'show'])
                 ->name('show');
 
             // POST /api/users → store()
-            Route::post('/', [UserController::class, 'store'])
+            Route::post('/', [UserController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:users_create');
 
             // PUT /api/users/{id} → update()
-            Route::put('/{id}', [UserController::class, 'update'])
+            Route::put('/{id}', [UserController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:users_edit');
 
             // PUT /api/users/{id}/password → updatePassword()
-            Route::put('/{id}/change-password', [UserController::class, 'updatePassword'])
+            Route::put('/{id}/change-password', [UserController::class , 'updatePassword'])
                 ->name('update-password')
                 ->middleware('permission:users_edit');
-        });
+        }
+        );
 
-    Route::prefix('notifications')
-        ->name('users.notifications.')
-        ->middleware('auth:sanctum') // o el middleware que uses
-        ->group(function () {
+        Route::prefix('notifications')
+            ->name('users.notifications.')
+            ->middleware('auth:sanctum') // o el middleware que uses
+            ->group(function () {
 
-            Route::get('/', [NotificationController::class, 'index']);
+            Route::get('/', [NotificationController::class , 'index']);
 
-            Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+            Route::post('/{id}/read', [NotificationController::class , 'markAsRead']);
 
-            Route::post('/read-all', [NotificationController::class, 'markAll']);
-        });
+            Route::post('/read-all', [NotificationController::class , 'markAll']);
+        }
+        );
 
-    Route::prefix('incidents')
-        ->name('incidents.')
-        ->middleware('permission:incidents_view')
-        ->group(function () {
+        Route::prefix('incidents')
+            ->name('incidents.')
+            ->middleware('permission:incidents_view')
+            ->group(function () {
 
             // GET /api/incidents → index()
-            Route::get('/', [IncidentController::class, 'index'])
+            Route::get('/', [IncidentController::class , 'index'])
                 ->name('index');
 
             // GET /api/incidents/{id} → show()
-            Route::get('/show/{id}', [IncidentController::class, 'show'])
+            Route::get('/show/{id}', [IncidentController::class , 'show'])
                 ->name('show');
 
             // POST /api/incidents → store()
-            Route::post('/', [IncidentController::class, 'store'])
+            Route::post('/', [IncidentController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:incidents_create');
 
             // PUT /api/incidents/{id} → update()
-            Route::put('/update/{id}', [IncidentController::class, 'update'])
+            Route::put('/update/{id}', [IncidentController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:incidents_edit');
 
             // PUT /api/incidents/assign/{id} → update()
-            Route::put('/assign/{id}', [IncidentController::class, 'assign'])
+            Route::put('/assign/{id}', [IncidentController::class , 'assign'])
                 ->name('assign')
                 ->middleware('permission:incidents_edit');
 
             // PUT /api/incidents/follow/{id} → follow()
-            Route::put('/follow/{id}', [IncidentController::class, 'follow'])
+            Route::put('/follow/{id}', [IncidentController::class , 'follow'])
                 ->name('follow')
                 ->middleware('permission:incidents_edit');
 
             // GET /api/incidents/reports → index()
-            Route::get('/reports', [ReportIncidentController::class, 'index'])
+            Route::get('/reports', [ReportIncidentController::class , 'index'])
                 ->name('reports');
 
 
@@ -280,175 +291,199 @@ Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function ()
                 ->name('messages.')
                 ->group(function () {
 
-                    // GET /api/incidents/messages/list/{$id} → index()
-                    Route::get('/list/{incident_id}', [MessageIncidentController::class, 'index']);
+                // GET /api/incidents/messages/list/{$id} → index()
+                Route::get('/list/{incident_id}', [MessageIncidentController::class , 'index']);
 
-                    // POST /api/incidents/messages/ → store()
-                    Route::post('/', [MessageIncidentController::class, 'store']);
+                // POST /api/incidents/messages/ → store()
+                Route::post('/', [MessageIncidentController::class , 'store']);
 
-                    // PUT /api/incidents/messages/{$id} → update()
-                    Route::put('/{id}', [MessageIncidentController::class, 'update']);
+                // PUT /api/incidents/messages/{$id} → update()
+                Route::put('/{id}', [MessageIncidentController::class , 'update']);
 
-                    // DELETE /api/incidents/messages/{$id} → destroy()
-                    Route::delete('/{id}', [MessageIncidentController::class, 'destroy']);
-                });
+                // DELETE /api/incidents/messages/{$id} → destroy()
+                Route::delete('/{id}', [MessageIncidentController::class , 'destroy']);
+            }
+            );
 
             Route::prefix('catalog')
                 ->name('catalog.')
                 ->group(function () {
 
-                    // GET /api/incidents/catalog → index()
-                    Route::get('', [IncidentCatalogController::class, 'index']);
+                // GET /api/incidents/catalog → index()
+                Route::get('', [IncidentCatalogController::class , 'index']);
 
-                    // POST /api/incidents/catalog/ → store()
-                    Route::post('', [IncidentCatalogController::class, 'store']);
+                // POST /api/incidents/catalog/ → store()
+                Route::post('', [IncidentCatalogController::class , 'store']);
 
-                    // PUT /api/incidents/catalog/{$id} → update()
-                    Route::put('{id}', [IncidentCatalogController::class, 'update']);
-                });
-        });
+                // PUT /api/incidents/catalog/{$id} → update()
+                Route::put('{id}', [IncidentCatalogController::class , 'update']);
+            }
+            );
 
-    Route::prefix('employees')
-        ->name('employees.')
-        ->middleware('permission:employees_view')
-        ->group(function () {
+            Route::prefix('types')
+                ->name('types.')
+                ->group(function () {
+
+                // GET /api/incidents/types → index()
+                Route::get('', [TypeController::class , 'index']);
+
+                // POST /api/incidents/types/ → store()
+                Route::post('', [TypeController::class , 'store']);
+
+                // PUT /api/incidents/types/{$id} → update()
+                Route::put('{id}', [TypeController::class , 'update']);
+            }
+            );
+        }
+        );
+
+        Route::prefix('employees')
+            ->name('employees.')
+            ->middleware('permission:employees_view')
+            ->group(function () {
 
             // GET /api/employees → index()
-            Route::get('/', [EmployeeController::class, 'index'])
+            Route::get('/', [EmployeeController::class , 'index'])
                 ->name('index');
 
             // GET /api/employees/show/{id} → show()
-            Route::get('/show/{id}', [EmployeeController::class, 'show'])
+            Route::get('/show/{id}', [EmployeeController::class , 'show'])
                 ->name('show');
 
             // POST /api/employees → store()
-            Route::post('/', [EmployeeController::class, 'store'])
+            Route::post('/', [EmployeeController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:employees_create_or_import');
 
             // PUT /api/employees/update/{id} → update()
-            Route::put('/update/{id}', [EmployeeController::class, 'update'])
+            Route::put('/update/{id}', [EmployeeController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:employees_edit');
 
             // POST /api/employees/import → import()
-            Route::post('/import', [EmployeeController::class, 'import'])
+            Route::post('/import', [EmployeeController::class , 'import'])
                 ->name('import')
                 ->middleware('permission:employees_create_or_import');
 
             // GET /api/employees/history/{id} → show()
-            Route::get('/history/{id}', [EmployeeController::class, 'getHistory'])
+            Route::get('/history/{id}', [EmployeeController::class , 'getHistory'])
                 ->name('getHistory');
 
-            Route::post('/deactivate/{id}', [EmployeeController::class, 'deactivate']);
-        });
+            Route::post('/deactivate/{id}', [EmployeeController::class , 'deactivate']);
+        }
+        );
 
 
-    Route::prefix('reports')->group(function () {
-        Route::get('/pnc', [PNCReportController::class, 'index']);
-        Route::get('/general', [GeneralReportController::class, 'index']);
-        Route::get('/office-summary', [OfficeSummaryController::class, 'index']);
-        Route::get('/digessp', [DigesspReportController::class, 'index']);
-        Route::get('/client-totals', [ClientTotalsController::class, 'index']);
+        Route::prefix('reports')->group(function () {
+            Route::get('/pnc', [PNCReportController::class , 'index']);
+            Route::get('/general', [GeneralReportController::class , 'index']);
+            Route::get('/office-summary', [OfficeSummaryController::class , 'index']);
+            Route::get('/digessp', [DigesspReportController::class , 'index']);
+            Route::get('/client-totals', [ClientTotalsController::class , 'index']);
 
-        // Downloads
-        Route::get('/pnc/pdf', [PNCReportController::class, 'pdf']);
-        Route::get('/pnc/xlsx', [PNCReportController::class, 'xlsx']);
+            // Downloads
+            Route::get('/pnc/pdf', [PNCReportController::class , 'pdf']);
+            Route::get('/pnc/xlsx', [PNCReportController::class , 'xlsx']);
 
-        Route::get('/general/pdf', [GeneralReportController::class, 'pdf']);
-        Route::get('/general/csv', [GeneralReportController::class, 'csv']);
-        Route::get('/general/xlsx', [GeneralReportController::class, 'xlsx']);
+            Route::get('/general/pdf', [GeneralReportController::class , 'pdf']);
+            Route::get('/general/csv', [GeneralReportController::class , 'csv']);
+            Route::get('/general/xlsx', [GeneralReportController::class , 'xlsx']);
 
-        Route::get('/office-summary/xlsx', [OfficeSummaryController::class, 'xlsx']);
-        Route::get('/digessp/xlsx', [DigesspReportController::class, 'xlsx']);
-        Route::get('/client-totals/xlsx', [ClientTotalsController::class, 'xlsx']);
-    });
+            Route::get('/office-summary/xlsx', [OfficeSummaryController::class , 'xlsx']);
+            Route::get('/digessp/xlsx', [DigesspReportController::class , 'xlsx']);
+            Route::get('/client-totals/xlsx', [ClientTotalsController::class , 'xlsx']);
+        }
+        );
 
-    Route::prefix('business')
-        ->name('business.')
-        ->middleware('permission:business_view')
-        ->group(function () {
+        Route::prefix('business')
+            ->name('business.')
+            ->middleware('permission:business_view')
+            ->group(function () {
 
             // GET /api/business → index()
-            Route::get('/', [BusinessController::class, 'index'])
+            Route::get('/', [BusinessController::class , 'index'])
                 ->name('index');
 
             // GET /api/business/{id} → show()
-            Route::get('/show/{id}', [BusinessController::class, 'show'])
+            Route::get('/show/{id}', [BusinessController::class , 'show'])
                 ->name('show');
 
             // POST /api/business → store()
-            Route::post('/', [BusinessController::class, 'store'])
+            Route::post('/', [BusinessController::class , 'store'])
                 ->name('store')
                 ->middleware('permission:business_create');
 
             // PUT /api/business/{id} → update()
-            Route::put('/{id}', [BusinessController::class, 'update'])
+            Route::put('/{id}', [BusinessController::class , 'update'])
                 ->name('update')
                 ->middleware('permission:business_edit');
-        });
+        }
+        );
 
-    Route::prefix('reports')
-        ->name('reports.')
-        ->middleware('permission:reports_view')
-        ->group(function () {
+        Route::prefix('reports')
+            ->name('reports.')
+            ->middleware('permission:reports_view')
+            ->group(function () {
 
             // GET /api/reports → index()
-            Route::post('/', [ReportsController::class, 'index'])
+            Route::post('/', [ReportsController::class , 'index'])
                 ->name('index');
 
             // GET /api/global-distribution-by-region → getGlobalDistributionByRegion()
-            Route::get('/global-distribution-by-region', [ReportsController::class, 'getGlobalDistributionByRegion'])
+            Route::get('/global-distribution-by-region', [ReportsController::class , 'getGlobalDistributionByRegion'])
                 ->name('getGlobalDistributionByRegion');
 
             // GET /api/distribution-by-region → getDistributionByRegion()
-            Route::get('/distribution-by-region', [ReportsController::class, 'getDistributionByRegion'])
+            Route::get('/distribution-by-region', [ReportsController::class , 'getDistributionByRegion'])
                 ->name('getDistributionByRegion');
-        });
+        }
+        );
 
-    Route::prefix('employee-status')
-        ->middleware('permission:employees_view')
-        ->group(function () {
+        Route::prefix('employee-status')
+            ->middleware('permission:employees_view')
+            ->group(function () {
 
             // GET /api/employee-status → index()
-            Route::get('/', [EmployeeStatusController::class, 'index']);
+            Route::get('/', [EmployeeStatusController::class , 'index']);
 
             // POST /api/employee-status → store()
-            Route::post('/', [EmployeeStatusController::class, 'store'])->middleware('permission:employee_status_create');
+            Route::post('/', [EmployeeStatusController::class , 'store'])->middleware('permission:employee_status_create');
 
             // PUT /api/employee-status/{id} → update()
-            Route::put('/{employeeStatus}', [EmployeeStatusController::class, 'update'])->middleware('permission:employee_status_edit');
-        });
+            Route::put('/{employeeStatus}', [EmployeeStatusController::class , 'update'])->middleware('permission:employee_status_edit');
+        }
+        );
 
-    Route::prefix('position-types')
-        ->middleware('permission:employees_view')
-        ->group(function () {
+        Route::prefix('position-types')
+            ->middleware('permission:employees_view')
+            ->group(function () {
 
             // GET /api/position-types → index()
-            Route::get('/', [PositionTypeController::class, 'index']);
+            Route::get('/', [PositionTypeController::class , 'index']);
 
             // POST /api/position-types → store()
-            Route::post('/', [PositionTypeController::class, 'store'])->middleware('permission:employee_positions_create');
+            Route::post('/', [PositionTypeController::class , 'store'])->middleware('permission:employee_positions_create');
 
             // PUT /api/position-types/{id} → update()
-            Route::put('/{positionType}', [PositionTypeController::class, 'update'])->middleware('permission:employee_positions_edit');
-        });
+            Route::put('/{positionType}', [PositionTypeController::class , 'update'])->middleware('permission:employee_positions_edit');
+        }
+        );
 
-    // GET /api/image/{filename} → show()
-    Route::get('/file', [FileController::class, 'show']);
+        // GET /api/image/{filename} → show()
+        Route::get('/file', [FileController::class , 'show']);
 
-    Route::prefix('service-positions')
-        ->name('servicespositions.')
-        ->group(function () {
+        Route::prefix('service-positions')
+            ->name('servicespositions.')
+            ->group(function () {
 
             // GET /api/service-positions → index()
-            Route::get('', [ServicePositionController::class, 'index']);
+            Route::get('', [ServicePositionController::class , 'index']);
 
             // POST /api/service-positions → store()
-            Route::post('', [ServicePositionController::class, 'store']);
+            Route::post('', [ServicePositionController::class , 'store']);
 
             // PUT /api/service-positions/{id} → update()
-            Route::put('{id}', [ServicePositionController::class, 'update']);
-        });
-});
-
+            Route::put('{id}', [ServicePositionController::class , 'update']);
+        }
+        );
+    });
