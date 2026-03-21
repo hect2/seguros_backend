@@ -406,10 +406,31 @@ class EmployeeController extends Controller
         //--------------------------------------------
         // 3. Fusionar archivos existentes + nuevos
         //--------------------------------------------
-        $mergedFiles = array_merge(
-            $currentFiles['files'] ?? [],
-            $files_saved
-        );
+        // $mergedFiles = array_merge(
+        //     $currentFiles['files'] ?? [],
+        //     $files_saved
+        // );
+
+
+        $currentFilesList = collect($currentFiles['files'] ?? []);
+        $newFilesList = collect($files_saved);
+        // Obtenemos los 'types' de los archivos nuevos para saber cuáles estamos recibiendo
+        $newTypes = $newFilesList->pluck('type')->toArray();
+        // Filtramos la lista de los archivos viejos.
+        // Aquellos cuyo 'type' coincida con los que acaban de subirse, los desechamos de la lista vieja (porque lo vamos a reemplazar).
+        $keptOldFiles = $currentFilesList->reject(function ($oldFile) use ($newTypes) {
+            
+            // NOTA: Aquí se reemplaza el archivo si coincide el type. Si quisieras ser súper estricto  
+            // y reemplazarlo *solo* si el viejo también tenía estatus de rechazado (ej. status == 2), 
+            // sería: return in_array($oldFile['type'] ?? '', $newTypes) && ($oldFile['status'] ?? null) == 2;
+            
+            return in_array($oldFile['type'] ?? '', $newTypes);
+        });
+        // Finalmente, unimos los archivos viejos "limpios" con los nuevos 
+        // y con ->values()->toArray() nos aseguramos de que los índices del arreglo queden ordenados (0, 1, 2...)
+        $mergedFiles = $keptOldFiles->merge($newFilesList)->values()->toArray();
+
+
 
         //--------------------------------------------
         // 4. Actualizar status según el body recibido
