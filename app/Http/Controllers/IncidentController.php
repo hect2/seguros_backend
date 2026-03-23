@@ -38,17 +38,28 @@ class IncidentController extends Controller
         // Apply role-based filtering
         $user = auth()->user();
         if ($user) {
-            $query->where(function ($q) use ($user) {
+            $reviewPermissions = [
+                'requests_review_th',
+                'requests_review_iao',
+                'requests_review_lic',
+                'requests_validate',
+                'requests_authorize',
+            ];
+            $canReviewAll = $user->hasAnyPermission($reviewPermissions);
 
-                // Incidentes que el usuario reportó directamente
-                // $q->where('incidents.user_reported', $user->id);
+            if (!$canReviewAll) {
+                $query->where(function ($q) use ($user) {
 
-                // Si el usuario tiene distritos asignados
-                if (!empty($user->district) && is_array($user->district)) {
-                    $q->orWhereIn('incidents.district_id', $user->district);
-                }
+                    // Incidentes que el usuario reportó directamente
+                    // $q->where('incidents.user_reported', $user->id);
 
-            });
+                    // Si el usuario tiene distritos asignados
+                    if (!empty($user->district) && is_array($user->district)) {
+                        $q->orWhereIn('incidents.district_id', $user->district);
+                    }
+
+                });
+            }
         }
         // Filtros opcionales
         if ($search = $request->query('search')) {

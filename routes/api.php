@@ -28,6 +28,11 @@ use Illuminate\Support\Facades\Route;
 Route::post('/login', [AuthController::class , 'login']);
 
 Route::middleware(['auth:sanctum', 'check.token.expiration'])->group(function () {
+    Route::get('/limpiar-permisos', function() {
+        // Limpia la caché específica de Spatie Permission
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        return 'Caché de permisos limpiada con éxito';
+    });
     Route::get('/user', [AuthController::class , 'user']);
     Route::post('/logout', [AuthController::class , 'logout']);
 

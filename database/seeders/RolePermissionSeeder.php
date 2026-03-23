@@ -105,6 +105,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_create',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // 2️⃣ Talento Humano – revisa documentación
@@ -119,6 +122,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_review_th',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // 3️⃣ IAO – revisa documentación
@@ -133,6 +139,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_review_iao',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // 4️⃣ Licenciada Ana Lucía – revisa documentación
@@ -147,6 +156,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_review_lic',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // 5️⃣ CFE – valida documentación
@@ -161,6 +173,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_validate',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // 6️⃣ SG – autoriza la solicitud
@@ -175,6 +190,9 @@ class RolePermissionSeeder extends Seeder
             'employees_bonus',
             'requests_view',
             'requests_authorize',
+            'incidents_view',
+            'incidents_create',
+            'incidents_edit',
         ]);
 
         // =========================
