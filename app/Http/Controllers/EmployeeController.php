@@ -381,8 +381,10 @@ class EmployeeController extends Controller
             'reason_for_leaving' => 'nullable|string',
             'suspension_date' => 'nullable|date',
             'life_insurance_code' => 'nullable|string',
-        ]);
 
+            'autorizacion' => 'nullable|string',
+        ]);
+        $validated['status_id'] = $validated['autorizacion'] ?? $validated['status_id'];
 
         $currentFiles = $employee->files ?? [
             'files' => [],
