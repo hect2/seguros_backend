@@ -19,8 +19,9 @@ class ReportIncidentController extends Controller
     {
         $start = $request->start_date;
         $end = $request->end_date;
+        $title = $request->title;
 
-        $report = $this->service->generate($start, $end);
+        $report = $this->service->generate($start, $end, $title);
 
         return response()->json([
             'message' => 'Incident report generated successfully',

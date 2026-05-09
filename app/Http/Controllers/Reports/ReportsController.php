@@ -26,7 +26,7 @@ class ReportsController extends Controller
     public function index(Request $request)
     {
         $request->validate([
-            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,all_summary',
+            'report_type' => 'required|string|in:summary_by_office,digessp_certifications,totals_by_client,global_distribution_by_region,distribution_by_region,all_summary,hires_lows_summary',
             'format' => 'nullable|string|in:json,pdf,xlsx,csv',
             'office_id' => 'nullable|exists:offices,id',
             'start_date' => 'nullable|date',
@@ -52,6 +52,9 @@ class ReportsController extends Controller
                 break;
             case 'all_summary':
                 $data = $this->getDailySummary($request, $code);
+                break;
+            case 'hires_lows_summary':
+                $data = $this->getHiresLowsSummary($request);
                 break;
         }
 
@@ -613,6 +616,53 @@ class ReportsController extends Controller
 
         return [
             'districts' => $districtsData,
+        ];
+    }
+
+    public function getHiresLowsSummary(Request $request)
+    {
+        if ($request->filled('start_date') || $request->filled('end_date')) {
+            $startDate = $request->start_date
+                ? Carbon::parse($request->start_date)->startOfDay()
+                : Carbon::parse($request->end_date)->startOfDay();
+
+            $endDate = $request->end_date
+                ? Carbon::parse($request->end_date)->endOfDay()
+                : Carbon::parse($request->start_date)->endOfDay();
+        } else {
+            $startDate = Carbon::today()->startOfDay();
+            $endDate = Carbon::today()->endOfDay();
+        }
+
+        $query = Office::query();
+        $user = Auth::user();
+        if (!$user->hasRole('Super Administrador') && !empty($user->office)) {
+            $query->where('id', $user->office[0]);
+        }
+
+        if ($request->filled('office_id')) {
+            $query->where('id', $request->input('office_id'));
+        }
+
+        $offices = $query->withCount([
+            'positions as hires_count' => fn($q) =>
+                $q->whereBetween('admission_date', [$startDate, $endDate]),
+            'positions as lows_count' => fn($q) =>
+                $q->whereBetween('departure_date', [$startDate, $endDate]),
+        ])->get();
+
+        $totals = [
+            'total_hires' => $offices->sum('hires_count'),
+            'total_lows' => $offices->sum('lows_count'),
+        ];
+
+        return [
+            'offices' => $offices,
+            'totals' => $totals,
+            'date_range' => [
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+            ]
         ];
     }
 

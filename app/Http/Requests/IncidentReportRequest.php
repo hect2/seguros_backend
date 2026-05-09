@@ -24,6 +24,7 @@ class IncidentReportRequest extends FormRequest
         return [
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:start_date',
+            'title' => 'nullable|string',
         ];
     }
 }

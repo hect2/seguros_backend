@@ -7,7 +7,7 @@ use App\Models\IncidentStatus;
 
 class IncidentReportService
 {
-    public function generate($start, $end)
+    public function generate($start, $end, $title = null)
     {
         $in_progress_status = IncidentStatus::select('id')->where("slug", 'in_progress')->first();
         $resolved_status = IncidentStatus::select('id')->where("slug", 'resolved')->first();
@@ -33,6 +33,8 @@ class IncidentReportService
             $query->whereDate('created_at', '>=', $start);
         if ($end)
             $query->whereDate('created_at', '<=', $end);
+        if ($title)
+            $query->where('title', 'like', "%{$title}%");
 
         // Estadistica de Incidentes en progreso por fecha
         $in_progress = $query->clone()

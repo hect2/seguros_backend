@@ -82,6 +82,10 @@ class IncidentController extends Controller
             $query->whereIn('criticals.slug', $criticidad);
         }
 
+        if ($title = $request->query('title')) {
+            $query->where('incidents.title', 'like', "%{$title}%");
+        }
+
         if ($startDate = $request->query('fecha_inicio')) {
             $endDate = $request->query('fecha_fin', now()); // si no hay fecha_fin, toma hoy
 
