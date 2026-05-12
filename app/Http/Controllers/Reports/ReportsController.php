@@ -569,21 +569,28 @@ class ReportsController extends Controller
     public function getGlobalDistributionByRegion(Request $request)
     {
         $districts = District::where('status', 1)
-            ->withCount([
+            ->with([
                 'offices' => function ($query) {
-                    $query->where('status', 1);
+                    $query->where('status', 1)->withCount('positions');
                 }
             ])
             ->get();
 
         $districtsData = $districts->map(function ($district) {
+            $officesData = $district->offices->map(function ($office) {
+                return [
+                    'code' => $office->name,
+                    'total' => $office->positions_count,
+                ];
+            });
             return [
                 'code' => $district->code,
-                'total' => $district->offices_count,
+                'total' => $officesData->sum('total'),
             ];
         });
+        
 
-        $totalOffices = $districts->sum('offices_count');
+        $totalOffices = $districtsData->sum('total');
 
         return [
             'totals' => $totalOffices,
