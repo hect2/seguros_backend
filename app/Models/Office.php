@@ -37,7 +37,7 @@ class Office extends Model
 
     public function employees()
     {
-        return $this->hasMany(Employee::class,'office_id','id');
+        return $this->hasMany(Employee::class, 'office_id', 'id');
     }
 
     public function positions()
@@ -48,5 +48,13 @@ class Office extends Model
     public function employee()
     {
         return $this->hasManyThrough(Employee::class, Position::class);
+    }
+
+    public function activePositions()
+    {
+        return $this->hasMany(Position::class, 'office_id', 'id')
+            ->whereHas('employees', function ($query) {
+                $query->where('status_id', 1);
+            });
     }
 }

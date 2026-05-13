@@ -571,7 +571,7 @@ class ReportsController extends Controller
         $districts = District::where('status', 1)
             ->with([
                 'offices' => function ($query) {
-                    $query->where('status', 1)->withCount('positions');
+                    $query->where('status', 1)->withCount('activePositions');
                 }
             ])
             ->get();
@@ -580,7 +580,7 @@ class ReportsController extends Controller
             $officesData = $district->offices->map(function ($office) {
                 return [
                     'code' => $office->name,
-                    'total' => $office->positions_count,
+                    'total' => $office->active_positions_count,
                 ];
             });
             return [
@@ -602,7 +602,7 @@ class ReportsController extends Controller
     {
         $districts = District::with([
             'offices' => function ($query) {
-                $query->where('status', 1)->withCount('positions');
+                $query->where('status', 1)->withCount('activePositions');
             }
         ])->get();
 
@@ -610,7 +610,7 @@ class ReportsController extends Controller
             $officesData = $district->offices->map(function ($office) {
                 return [
                     'code' => $office->name,
-                    'total' => $office->positions_count,
+                    'total' => $office->active_positions_count,
                 ];
             });
 
